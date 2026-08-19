@@ -216,3 +216,20 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Node / pnpm / Turborepo
+node_modules/
+dist/
+.turbo/
+*.tsbuildinfo
+
+# Python (uv-managed apps/api)
+.venv/
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# Infra data (downloaded OSM extracts, built OSRM graphs)
+infra/data/
