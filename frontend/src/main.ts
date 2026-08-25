@@ -87,6 +87,22 @@ if (app) {
       <button class="route-toast__cancel" type="button" aria-label="Dismiss">Dismiss</button>
     </div>
     <div class="map-controls">
+      <div class="share-control">
+        <button class="share-btn" type="button" aria-label="Export route" aria-haspopup="true" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5l6.8-3.9M8.6 13.5l6.8 3.9"/></svg>
+        </button>
+        <div class="share-menu" hidden>
+          <button class="share-menu__option share-menu__option--google" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.1 7-11.5A7 7 0 0 0 5 9.5C5 14.9 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+            <span>Open in Google Maps</span>
+          </button>
+          <button class="share-menu__option share-menu__option--apple" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.1 7-11.5A7 7 0 0 0 5 9.5C5 14.9 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+            <span>Open in Apple Maps</span>
+          </button>
+          <p class="share-menu__hint">Follows the route DryRoute found</p>
+        </div>
+      </div>
       <button class="edit-start-btn" type="button" aria-label="Edit route" disabled hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
       </button>

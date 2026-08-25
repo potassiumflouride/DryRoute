@@ -165,7 +165,8 @@ body {
 
 .edit-start-btn,
 .edit-save-btn,
-.edit-discard-btn {
+.edit-discard-btn,
+.share-btn {
   pointer-events: auto;
   width: 44px;
   height: 44px;
@@ -181,25 +182,87 @@ body {
 
 .edit-start-btn svg,
 .edit-save-btn svg,
-.edit-discard-btn svg {
+.edit-discard-btn svg,
+.share-btn svg {
   width: 18px;
   height: 18px;
 }
 
-.edit-start-btn {
+.edit-start-btn,
+.share-btn {
   background: var(--slate);
   color: var(--mist);
 }
 
-.edit-start-btn:hover {
+.edit-start-btn:hover,
+.share-btn:hover {
   color: var(--dry);
 }
 
-.edit-start-btn:disabled {
+.edit-start-btn:disabled,
+.share-btn:disabled {
   opacity: 0.5;
   cursor: default;
   pointer-events: none;
   box-shadow: none;
+}
+
+.share-control {
+  position: relative;
+}
+
+.share-menu {
+  pointer-events: auto;
+  position: absolute;
+  right: calc(100% + 0.6rem);
+  top: 50%;
+  transform: translateY(-50%);
+  width: max-content;
+  max-width: 15rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--slate);
+  box-shadow: 0 4px 16px var(--shadow);
+  padding: 0.35rem;
+}
+
+.share-menu:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.share-menu__option {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.55rem 0.6rem;
+  background: transparent;
+  color: var(--mist);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.share-menu__option svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--address);
+}
+
+.share-menu__option:hover {
+  background: var(--hover);
+}
+
+.share-menu__hint {
+  margin: 0.2rem 0.6rem 0.1rem;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  color: var(--address);
 }
 
 .edit-confirm-group:not([hidden]) {

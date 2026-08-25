@@ -3,6 +3,7 @@ import * as turf from "@turf/turf";
 import type { GeocodeResult, Route } from "./types";
 import { FAKE_RAIN_ZONE } from "./devmode";
 import { addToMapWhenReady } from "./mapReady";
+import { buildExportPoints, buildGoogleMapsUrl, buildAppleMapsUrl } from "./mapExport";
 
 const ROUTE_SOURCE_ID = "route";
 const ROUTE_LAYER_ID = "route-layer";
@@ -38,6 +39,10 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
   const editConfirmGroup = document.querySelector<HTMLDivElement>(".edit-confirm-group");
   const editSaveBtn = document.querySelector<HTMLButtonElement>(".edit-save-btn");
   const editDiscardBtn = document.querySelector<HTMLButtonElement>(".edit-discard-btn");
+  const shareBtn = document.querySelector<HTMLButtonElement>(".share-btn");
+  const shareMenu = document.querySelector<HTMLDivElement>(".share-menu");
+  const shareGoogleOption = document.querySelector<HTMLButtonElement>(".share-menu__option--google");
+  const shareAppleOption = document.querySelector<HTMLButtonElement>(".share-menu__option--apple");
 
   const noop: RouteController = {
     setOrigin: () => {},
@@ -55,7 +60,11 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     !editStartBtn ||
     !editConfirmGroup ||
     !editSaveBtn ||
-    !editDiscardBtn
+    !editDiscardBtn ||
+    !shareBtn ||
+    !shareMenu ||
+    !shareGoogleOption ||
+    !shareAppleOption
   )
     return noop;
 
@@ -67,6 +76,8 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
   let dragMode: { kind: "move"; index: number } | { kind: "insert"; index: number } | null = null;
   let lastRouteAtRisk = false;
   let lastRouteFeature: GeoJSON.Feature<GeoJSON.LineString> | null = null;
+  let lastRoute: Route | null = null;
+  let lastRouteAnchors: LngLat[] | null = null;
   let isEditMode = false;
 
   const isTouchDevice = () => window.matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0;
@@ -143,6 +154,7 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     lastRouteAtRisk = atRisk;
     lastRouteFeature = feature;
     editStartBtn.disabled = false;
+    shareBtn.disabled = false;
     const source = map.getSource(ROUTE_SOURCE_ID) as maplibregl.GeoJSONSource | undefined;
     if (source) {
       source.setData(feature);
@@ -218,7 +230,11 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     if (map.getSource(ROUTE_SOURCE_ID)) map.removeSource(ROUTE_SOURCE_ID);
     lastRouteAtRisk = false;
     lastRouteFeature = null;
+    lastRoute = null;
+    lastRouteAnchors = null;
     editStartBtn.disabled = true;
+    shareBtn.disabled = true;
+    closeShareMenu();
     if (isEditMode) {
       isEditMode = false;
       applyEditModeState();
@@ -250,6 +266,28 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
   const hideToast = () => {
     toast.hidden = true;
     toast.classList.remove("is-blocked");
+  };
+
+  const closeShareMenu = () => {
+    shareMenu.hidden = true;
+    document.removeEventListener("click", onShareMenuOutsideClick, true);
+    document.removeEventListener("keydown", onShareMenuKeydown);
+  };
+
+  const openShareMenu = () => {
+    shareMenu.hidden = false;
+    document.addEventListener("click", onShareMenuOutsideClick, true);
+    document.addEventListener("keydown", onShareMenuKeydown);
+  };
+
+  const onShareMenuOutsideClick = (event: MouseEvent) => {
+    const target = event.target as Node;
+    if (shareMenu.contains(target) || shareBtn.contains(target)) return;
+    closeShareMenu();
+  };
+
+  const onShareMenuKeydown = (event: KeyboardEvent) => {
+    if (event.key === "Escape") closeShareMenu();
   };
 
   const showToast = (message: string, blocked: boolean) => {
@@ -392,6 +430,8 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
       if (!response.ok) throw new Error(`Route fetch failed: ${response.status}`);
       const route = (await response.json()) as Route;
       const feature = toGeoJson(route);
+      lastRoute = route;
+      lastRouteAnchors = [origin, ...waypoints, destination];
       if (fit) fitToRoute(feature);
       showSummary(route);
 
@@ -412,6 +452,8 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
   editStartBtn.hidden = !isTouchDevice();
   editStartBtn.disabled = true;
   editConfirmGroup.hidden = true;
+  shareBtn.disabled = true;
+  shareMenu.hidden = true;
 
   editStartBtn.addEventListener("click", () => {
     if (editStartBtn.disabled) return;
@@ -432,6 +474,26 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     applyEditModeState();
     waypoints = [...waypointsBeforeEdit];
     void navigate({ fit: false });
+  });
+
+  shareBtn.addEventListener("click", () => {
+    if (shareBtn.disabled) return;
+    if (shareMenu.hidden) openShareMenu();
+    else closeShareMenu();
+  });
+
+  shareGoogleOption.addEventListener("click", () => {
+    if (!lastRoute || !lastRouteAnchors) return;
+    const points = buildExportPoints(lastRoute, lastRouteAnchors);
+    window.open(buildGoogleMapsUrl(points), "_blank", "noopener,noreferrer");
+    closeShareMenu();
+  });
+
+  shareAppleOption.addEventListener("click", () => {
+    if (!lastRoute || !lastRouteAnchors) return;
+    const points = buildExportPoints(lastRoute, lastRouteAnchors);
+    window.open(buildAppleMapsUrl(points), "_blank", "noopener,noreferrer");
+    closeShareMenu();
   });
 
   toastDismiss.addEventListener("click", hideToast);
