@@ -59,12 +59,6 @@ if (app) {
         />
         <ul class="search__results" hidden></ul>
       </div>
-      <div class="search search--waypoint" hidden>
-        <div class="search__waypoint-row">
-          <input class="search__input" type="text" placeholder="Waypoint" readonly />
-          <button class="search__waypoint-clear" type="button" aria-label="Remove waypoint">&times;</button>
-        </div>
-      </div>
       <div class="search search--destination">
         <input
           class="search__input"
@@ -75,12 +69,15 @@ if (app) {
         <ul class="search__results" hidden></ul>
       </div>
       <button class="navigate-button" type="button" disabled>Navigate</button>
-      <div class="route-summary" hidden></div>
+      <div class="route-summary-row">
+        <div class="route-summary" hidden></div>
+        <button class="route-reset" type="button" hidden>Reset route</button>
+      </div>
     </div>
     <div class="route-toast" hidden>
       <span class="route-toast__dot"></span>
       <span class="route-toast__message"></span>
-      <button class="route-toast__cancel" type="button" aria-label="Cancel waypoint selection">Cancel</button>
+      <button class="route-toast__cancel" type="button" aria-label="Dismiss">Dismiss</button>
     </div>
     <div class="radar-scrubber" role="group" aria-label="Rain radar playback">
       <div class="radar-scrubber__row">

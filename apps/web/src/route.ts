@@ -6,6 +6,7 @@ import { addToMapWhenReady } from "./mapReady";
 
 const ROUTE_SOURCE_ID = "route";
 const ROUTE_LAYER_ID = "route-layer";
+const ROUTE_HITBOX_LAYER_ID = "route-layer-hitbox";
 
 interface LngLat {
   lat: number;
@@ -22,30 +23,17 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
   const navigateButton = document.querySelector<HTMLButtonElement>(".navigate-button");
   const toast = document.querySelector<HTMLDivElement>(".route-toast");
   const toastMessage = document.querySelector<HTMLSpanElement>(".route-toast__message");
-  const toastCancel = document.querySelector<HTMLButtonElement>(".route-toast__cancel");
-  const waypointBox = document.querySelector<HTMLDivElement>(".search--waypoint");
-  const waypointInput = document.querySelector<HTMLInputElement>(".search--waypoint .search__input");
-  const waypointClear = document.querySelector<HTMLButtonElement>(".search__waypoint-clear");
+  const toastDismiss = document.querySelector<HTMLButtonElement>(".route-toast__cancel");
   const routeSummary = document.querySelector<HTMLDivElement>(".route-summary");
+  const routeReset = document.querySelector<HTMLButtonElement>(".route-reset");
 
   const noop: RouteController = { setOrigin: () => {}, setDestination: () => {}, reattach: () => {} };
-  if (
-    !navigateButton ||
-    !toast ||
-    !toastMessage ||
-    !toastCancel ||
-    !waypointBox ||
-    !waypointInput ||
-    !waypointClear ||
-    !routeSummary
-  )
-    return noop;
+  if (!navigateButton || !toast || !toastMessage || !toastDismiss || !routeSummary || !routeReset) return noop;
 
   let origin: LngLat | null = null;
   let destination: LngLat | null = null;
   let waypoint: LngLat | null = null;
-  let waypointMarker: maplibregl.Marker | null = null;
-  let awaitingWaypointClick = false;
+  let isDraggingRoute = false;
   let lastRouteAtRisk = false;
   let lastRouteFeature: GeoJSON.Feature<GeoJSON.LineString> | null = null;
 
@@ -73,6 +61,18 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     return { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates } };
   };
 
+  const straightPreview = (point: LngLat): GeoJSON.Feature<GeoJSON.LineString> => {
+    const coordinates = [origin, point, destination]
+      .filter((p): p is LngLat => p !== null)
+      .map((p) => [p.lon, p.lat] as [number, number]);
+    return { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates } };
+  };
+
+  const setLineData = (feature: GeoJSON.Feature<GeoJSON.LineString>) => {
+    const source = map.getSource(ROUTE_SOURCE_ID) as maplibregl.GeoJSONSource | undefined;
+    source?.setData(feature);
+  };
+
   const drawRoute = (feature: GeoJSON.Feature<GeoJSON.LineString>, atRisk: boolean) => {
     lastRouteAtRisk = atRisk;
     lastRouteFeature = feature;
@@ -97,10 +97,20 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
           "line-dasharray": atRisk ? [2, 1.5] : [1],
         },
       });
+      // A wider, invisible line on top of the visible one - makes the route
+      // much easier to grab and start a drag from than the 4px visible line.
+      map.addLayer({
+        id: ROUTE_HITBOX_LAYER_ID,
+        type: "line",
+        source: ROUTE_SOURCE_ID,
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: { "line-color": "#000", "line-width": 24, "line-opacity": 0 },
+      });
     });
   };
 
   const clearRoute = () => {
+    if (map.getLayer(ROUTE_HITBOX_LAYER_ID)) map.removeLayer(ROUTE_HITBOX_LAYER_ID);
     if (map.getLayer(ROUTE_LAYER_ID)) map.removeLayer(ROUTE_LAYER_ID);
     if (map.getSource(ROUTE_SOURCE_ID)) map.removeSource(ROUTE_SOURCE_ID);
     lastRouteAtRisk = false;
@@ -120,75 +130,18 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     const km = (route.distanceMeters / 1000).toFixed(1);
     routeSummary.textContent = `${km} km · ${formatDuration(route.durationSeconds)}`;
     routeSummary.hidden = false;
+    routeReset.hidden = waypoint === null;
   };
 
   const hideSummary = () => {
     routeSummary.hidden = true;
     routeSummary.textContent = "";
-  };
-
-  const formatWaypoint = (point: LngLat) => `${point.lat.toFixed(4)}, ${point.lon.toFixed(4)}`;
-
-  const showWaypointBox = (point: LngLat) => {
-    waypointInput.value = formatWaypoint(point);
-    waypointBox.hidden = false;
-  };
-
-  const hideWaypointBox = () => {
-    waypointBox.hidden = true;
-    waypointInput.value = "";
-  };
-
-  const placeWaypointMarker = (point: LngLat) => {
-    if (waypointMarker) waypointMarker.remove();
-    waypointMarker = new maplibregl.Marker({
-      color: getComputedStyle(document.documentElement).getPropertyValue("--mist").trim(),
-      draggable: true,
-    })
-      .setLngLat([point.lon, point.lat])
-      .addTo(map);
-    waypointMarker.on("dragend", () => {
-      if (!waypointMarker) return;
-      const { lat, lng } = waypointMarker.getLngLat();
-      waypoint = { lat, lon: lng };
-      showWaypointBox(waypoint);
-      void navigate({ fit: false });
-    });
-  };
-
-  const setWaypoint = (point: LngLat) => {
-    waypoint = point;
-    placeWaypointMarker(point);
-    showWaypointBox(point);
-  };
-
-  const clearWaypoint = () => {
-    waypoint = null;
-    if (waypointMarker) {
-      waypointMarker.remove();
-      waypointMarker = null;
-    }
-    hideWaypointBox();
+    routeReset.hidden = true;
   };
 
   const hideToast = () => {
     toast.hidden = true;
     toast.classList.remove("is-blocked");
-  };
-
-  const exitWaypointMode = () => {
-    awaitingWaypointClick = false;
-    map.getCanvas().style.cursor = "";
-    document.removeEventListener("keydown", onEscape);
-  };
-
-  const onEscape = (event: KeyboardEvent) => {
-    if (event.key === "Escape") cancelWaypointMode();
-  };
-
-  const cancelWaypointMode = () => {
-    exitWaypointMode();
-    hideToast();
   };
 
   const showToast = (message: string, blocked: boolean) => {
@@ -201,24 +154,26 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     return turf.lineIntersect(feature, FAKE_RAIN_ZONE).features.length > 0;
   };
 
-  const enterWaypointMode = (stillCrossing: boolean) => {
-    awaitingWaypointClick = true;
-    map.getCanvas().style.cursor = "crosshair";
-    showToast(
-      stillCrossing
-        ? "Still crosses the rain - tap the map for a different waypoint"
-        : "Route crosses the rain - tap the map to drop a waypoint",
-      true,
-    );
-    document.addEventListener("keydown", onEscape);
-    map.once("click", onMapClick);
+  const onRouteDragMove = (event: maplibregl.MapMouseEvent) => {
+    setLineData(straightPreview({ lat: event.lngLat.lat, lon: event.lngLat.lng }));
   };
 
-  const onMapClick = (event: maplibregl.MapMouseEvent) => {
-    if (!awaitingWaypointClick) return;
-    exitWaypointMode();
-    setWaypoint({ lat: event.lngLat.lat, lon: event.lngLat.lng });
+  const onRouteDragEnd = (event: maplibregl.MapMouseEvent) => {
+    map.off("mousemove", onRouteDragMove);
+    isDraggingRoute = false;
+    map.dragPan.enable();
+    map.getCanvas().style.cursor = "grab";
+    waypoint = { lat: event.lngLat.lat, lon: event.lngLat.lng };
     void navigate({ fit: false });
+  };
+
+  const onRouteMouseDown = (event: maplibregl.MapMouseEvent) => {
+    event.preventDefault();
+    isDraggingRoute = true;
+    map.dragPan.disable();
+    map.getCanvas().style.cursor = "grabbing";
+    map.on("mousemove", onRouteDragMove);
+    map.once("mouseup", onRouteDragEnd);
   };
 
   const navigate = async (opts: { fit?: boolean } = {}) => {
@@ -246,7 +201,7 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
 
       if (isDevMode() && intersectsRainZone(feature)) {
         drawRoute(feature, true);
-        enterWaypointMode(waypoint !== null);
+        showToast("Route crosses the rain - drag the route to move it out of the rain", true);
       } else {
         drawRoute(feature, false);
         hideToast();
@@ -258,31 +213,39 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
   };
 
   navigateButton.addEventListener("click", () => {
-    clearWaypoint();
+    waypoint = null;
     void navigate();
   });
 
-  toastCancel.addEventListener("click", cancelWaypointMode);
+  toastDismiss.addEventListener("click", hideToast);
 
-  waypointClear.addEventListener("click", () => {
-    clearWaypoint();
-    cancelWaypointMode();
+  routeReset.addEventListener("click", () => {
+    waypoint = null;
+    routeReset.hidden = true;
     void navigate();
   });
+
+  map.on("mouseenter", ROUTE_HITBOX_LAYER_ID, () => {
+    if (!isDraggingRoute) map.getCanvas().style.cursor = "grab";
+  });
+  map.on("mouseleave", ROUTE_HITBOX_LAYER_ID, () => {
+    if (!isDraggingRoute) map.getCanvas().style.cursor = "";
+  });
+  map.on("mousedown", ROUTE_HITBOX_LAYER_ID, onRouteMouseDown);
 
   return {
     setOrigin: (result: GeocodeResult) => {
       origin = { lat: result.lat, lon: result.lon };
-      clearWaypoint();
+      waypoint = null;
       clearRoute();
-      cancelWaypointMode();
+      hideToast();
       updateNavigateEnabled();
     },
     setDestination: (result: GeocodeResult) => {
       destination = { lat: result.lat, lon: result.lon };
-      clearWaypoint();
+      waypoint = null;
       clearRoute();
-      cancelWaypointMode();
+      hideToast();
       updateNavigateEnabled();
     },
     reattach: () => {

@@ -173,34 +173,6 @@ body {
   position: relative;
 }
 
-.search__waypoint-row {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.search--waypoint .search__input {
-  cursor: default;
-}
-
-.search__waypoint-clear {
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 0.75rem;
-  background: var(--slate);
-  color: var(--address);
-  font-size: 1.1rem;
-  line-height: 1;
-  cursor: pointer;
-  box-shadow: 0 4px 16px var(--shadow);
-}
-
-.search__waypoint-clear:hover {
-  color: var(--mist);
-}
-
 .search__input {
   width: 100%;
   box-sizing: border-box;
@@ -457,8 +429,13 @@ body {
   box-shadow: none;
 }
 
+.route-summary-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .route-summary {
-  align-self: flex-start;
   padding: 0.35rem 0.75rem;
   border-radius: 0.75rem;
   background: var(--slate);
@@ -466,6 +443,20 @@ body {
   font-family: var(--font-mono);
   font-size: 0.78rem;
   box-shadow: 0 4px 16px var(--shadow);
+}
+
+.route-reset {
+  border: none;
+  background: transparent;
+  color: var(--address);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.route-reset:hover {
+  color: var(--mist);
 }
 
 .route-toast {
