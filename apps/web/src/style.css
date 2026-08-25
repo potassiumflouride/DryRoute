@@ -457,6 +457,17 @@ body {
   box-shadow: none;
 }
 
+.route-summary {
+  align-self: flex-start;
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.75rem;
+  background: var(--slate);
+  color: var(--mist);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
 .route-toast {
   position: absolute;
   left: 1rem;

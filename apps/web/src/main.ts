@@ -75,6 +75,7 @@ if (app) {
         <ul class="search__results" hidden></ul>
       </div>
       <button class="navigate-button" type="button" disabled>Navigate</button>
+      <div class="route-summary" hidden></div>
     </div>
     <div class="route-toast" hidden>
       <span class="route-toast__dot"></span>

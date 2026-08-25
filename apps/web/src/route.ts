@@ -26,9 +26,19 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
   const waypointBox = document.querySelector<HTMLDivElement>(".search--waypoint");
   const waypointInput = document.querySelector<HTMLInputElement>(".search--waypoint .search__input");
   const waypointClear = document.querySelector<HTMLButtonElement>(".search__waypoint-clear");
+  const routeSummary = document.querySelector<HTMLDivElement>(".route-summary");
 
   const noop: RouteController = { setOrigin: () => {}, setDestination: () => {}, reattach: () => {} };
-  if (!navigateButton || !toast || !toastMessage || !toastCancel || !waypointBox || !waypointInput || !waypointClear)
+  if (
+    !navigateButton ||
+    !toast ||
+    !toastMessage ||
+    !toastCancel ||
+    !waypointBox ||
+    !waypointInput ||
+    !waypointClear ||
+    !routeSummary
+  )
     return noop;
 
   let origin: LngLat | null = null;
@@ -95,6 +105,26 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     if (map.getSource(ROUTE_SOURCE_ID)) map.removeSource(ROUTE_SOURCE_ID);
     lastRouteAtRisk = false;
     lastRouteFeature = null;
+    hideSummary();
+  };
+
+  const formatDuration = (seconds: number) => {
+    const minutes = Math.round(seconds / 60);
+    if (minutes < 60) return `${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    const remainder = minutes % 60;
+    return remainder === 0 ? `${hours} hr` : `${hours} hr ${remainder} min`;
+  };
+
+  const showSummary = (route: Route) => {
+    const km = (route.distanceMeters / 1000).toFixed(1);
+    routeSummary.textContent = `${km} km · ${formatDuration(route.durationSeconds)}`;
+    routeSummary.hidden = false;
+  };
+
+  const hideSummary = () => {
+    routeSummary.hidden = true;
+    routeSummary.textContent = "";
   };
 
   const formatWaypoint = (point: LngLat) => `${point.lat.toFixed(4)}, ${point.lon.toFixed(4)}`;
@@ -212,6 +242,7 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
       const route = (await response.json()) as Route;
       const feature = toGeoJson(route);
       if (fit) fitToRoute(feature);
+      showSummary(route);
 
       if (isDevMode() && intersectsRainZone(feature)) {
         drawRoute(feature, true);
@@ -221,6 +252,7 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
         hideToast();
       }
     } catch {
+      hideSummary();
       showToast("Couldn't fetch a route - try again", false);
     }
   };
