@@ -2,10 +2,10 @@ from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, Request, Response
 
-from dryroute_api import geocoding, osrm, radar
+from dryroute_api import geocoding, radar, scoring, valhalla
 from dryroute_api.geocoding import GeocodeResult
-from dryroute_api.osrm import OsrmRoutingError, Route
 from dryroute_api.radar import RadarFrame
+from dryroute_api.valhalla import Route, TravelMode, ValhallaRoutingError
 
 router = APIRouter()
 
@@ -17,11 +17,13 @@ async def geocode(q: str) -> list[GeocodeResult]:
 
 @router.get("/route")
 async def get_route(
+    request: Request,
     origin_lat: float,
     origin_lon: float,
     dest_lat: float,
     dest_lon: float,
     waypoints: str | None = None,
+    mode: TravelMode = "motorcycle",
 ) -> Route:
     coordinates = [(origin_lon, origin_lat)]
     if waypoints:
@@ -33,9 +35,12 @@ async def get_route(
             raise HTTPException(status_code=400, detail="Malformed waypoints parameter") from exc
     coordinates.append((dest_lon, dest_lat))
 
+    store: radar.RadarStore | None = getattr(request.app.state, "radar_store", None)
+    exclude_polygons = await scoring.current_rain_polygons(store)
+
     try:
-        return await osrm.route(coordinates)
-    except OsrmRoutingError as exc:
+        return await valhalla.route(coordinates, mode, exclude_polygons)
+    except ValhallaRoutingError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 

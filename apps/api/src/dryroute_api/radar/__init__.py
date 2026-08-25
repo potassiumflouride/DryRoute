@@ -140,6 +140,13 @@ class RadarStore:
                     return stored.image_bytes
         return None
 
+    async def latest(self) -> tuple[RadarFrame, bytes] | None:
+        async with self._lock:
+            if not self._frames:
+                return None
+            stored = max(self._frames, key=lambda s: s.frame.timestamp)
+            return stored.frame, stored.image_bytes
+
 
 async def backfill(store: RadarStore) -> None:
     floor = _floor_to_interval(datetime.now(tz=SGT))
