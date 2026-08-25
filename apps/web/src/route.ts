@@ -23,9 +23,13 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
   const toast = document.querySelector<HTMLDivElement>(".route-toast");
   const toastMessage = document.querySelector<HTMLSpanElement>(".route-toast__message");
   const toastCancel = document.querySelector<HTMLButtonElement>(".route-toast__cancel");
+  const waypointBox = document.querySelector<HTMLDivElement>(".search--waypoint");
+  const waypointInput = document.querySelector<HTMLInputElement>(".search--waypoint .search__input");
+  const waypointClear = document.querySelector<HTMLButtonElement>(".search__waypoint-clear");
 
   const noop: RouteController = { setOrigin: () => {}, setDestination: () => {}, reattach: () => {} };
-  if (!navigateButton || !toast || !toastMessage || !toastCancel) return noop;
+  if (!navigateButton || !toast || !toastMessage || !toastCancel || !waypointBox || !waypointInput || !waypointClear)
+    return noop;
 
   let origin: LngLat | null = null;
   let destination: LngLat | null = null;
@@ -93,12 +97,48 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     lastRouteFeature = null;
   };
 
+  const formatWaypoint = (point: LngLat) => `${point.lat.toFixed(4)}, ${point.lon.toFixed(4)}`;
+
+  const showWaypointBox = (point: LngLat) => {
+    waypointInput.value = formatWaypoint(point);
+    waypointBox.hidden = false;
+  };
+
+  const hideWaypointBox = () => {
+    waypointBox.hidden = true;
+    waypointInput.value = "";
+  };
+
+  const placeWaypointMarker = (point: LngLat) => {
+    if (waypointMarker) waypointMarker.remove();
+    waypointMarker = new maplibregl.Marker({
+      color: getComputedStyle(document.documentElement).getPropertyValue("--mist").trim(),
+      draggable: true,
+    })
+      .setLngLat([point.lon, point.lat])
+      .addTo(map);
+    waypointMarker.on("dragend", () => {
+      if (!waypointMarker) return;
+      const { lat, lng } = waypointMarker.getLngLat();
+      waypoint = { lat, lon: lng };
+      showWaypointBox(waypoint);
+      void navigate({ fit: false });
+    });
+  };
+
+  const setWaypoint = (point: LngLat) => {
+    waypoint = point;
+    placeWaypointMarker(point);
+    showWaypointBox(point);
+  };
+
   const clearWaypoint = () => {
     waypoint = null;
     if (waypointMarker) {
       waypointMarker.remove();
       waypointMarker = null;
     }
+    hideWaypointBox();
   };
 
   const hideToast = () => {
@@ -147,20 +187,13 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
   const onMapClick = (event: maplibregl.MapMouseEvent) => {
     if (!awaitingWaypointClick) return;
     exitWaypointMode();
-
-    waypoint = { lat: event.lngLat.lat, lon: event.lngLat.lng };
-    if (waypointMarker) waypointMarker.remove();
-    waypointMarker = new maplibregl.Marker({
-      color: getComputedStyle(document.documentElement).getPropertyValue("--mist").trim(),
-    })
-      .setLngLat([waypoint.lon, waypoint.lat])
-      .addTo(map);
-
-    void navigate();
+    setWaypoint({ lat: event.lngLat.lat, lon: event.lngLat.lng });
+    void navigate({ fit: false });
   };
 
-  const navigate = async () => {
+  const navigate = async (opts: { fit?: boolean } = {}) => {
     if (!origin || !destination) return;
+    const fit = opts.fit ?? true;
 
     const params = new URLSearchParams({
       origin_lat: String(origin.lat),
@@ -178,7 +211,7 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
       if (!response.ok) throw new Error(`Route fetch failed: ${response.status}`);
       const route = (await response.json()) as Route;
       const feature = toGeoJson(route);
-      fitToRoute(feature);
+      if (fit) fitToRoute(feature);
 
       if (isDevMode() && intersectsRainZone(feature)) {
         drawRoute(feature, true);
@@ -198,6 +231,12 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
   });
 
   toastCancel.addEventListener("click", cancelWaypointMode);
+
+  waypointClear.addEventListener("click", () => {
+    clearWaypoint();
+    cancelWaypointMode();
+    void navigate();
+  });
 
   return {
     setOrigin: (result: GeocodeResult) => {

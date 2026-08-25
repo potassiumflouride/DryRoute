@@ -59,6 +59,12 @@ if (app) {
         />
         <ul class="search__results" hidden></ul>
       </div>
+      <div class="search search--waypoint" hidden>
+        <div class="search__waypoint-row">
+          <input class="search__input" type="text" placeholder="Waypoint" readonly />
+          <button class="search__waypoint-clear" type="button" aria-label="Remove waypoint">&times;</button>
+        </div>
+      </div>
       <div class="search search--destination">
         <input
           class="search__input"

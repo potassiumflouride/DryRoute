@@ -173,6 +173,34 @@ body {
   position: relative;
 }
 
+.search__waypoint-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.search--waypoint .search__input {
+  cursor: default;
+}
+
+.search__waypoint-clear {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 0.75rem;
+  background: var(--slate);
+  color: var(--address);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+.search__waypoint-clear:hover {
+  color: var(--mist);
+}
+
 .search__input {
   width: 100%;
   box-sizing: border-box;
