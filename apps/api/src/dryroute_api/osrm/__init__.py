@@ -1,3 +1,5 @@
+import asyncio
+
 import httpx
 from pydantic import BaseModel
 
@@ -55,13 +57,15 @@ async def route(coordinates: list[tuple[float, float]]) -> Route:
         raise OsrmRoutingError("At least two coordinates are required to route")
 
     async with httpx.AsyncClient() as client:
-        legs = [
-            await _route_leg(client, coordinates[i], coordinates[i + 1])
-            for i in range(len(coordinates) - 1)
-        ]
+        legs = await asyncio.gather(
+            *(
+                _route_leg(client, coordinates[i], coordinates[i + 1])
+                for i in range(len(coordinates) - 1)
+            )
+        )
 
     return Route(
-        legs=legs,
+        legs=list(legs),
         distanceMeters=sum(leg.distanceMeters for leg in legs),
         durationSeconds=sum(leg.durationSeconds for leg in legs),
     )

@@ -21,12 +21,16 @@ async def get_route(
     origin_lon: float,
     dest_lat: float,
     dest_lon: float,
-    waypoint_lat: float | None = None,
-    waypoint_lon: float | None = None,
+    waypoints: str | None = None,
 ) -> Route:
     coordinates = [(origin_lon, origin_lat)]
-    if waypoint_lat is not None and waypoint_lon is not None:
-        coordinates.append((waypoint_lon, waypoint_lat))
+    if waypoints:
+        try:
+            for pair in waypoints.split(";"):
+                lat_str, lon_str = pair.split(",")
+                coordinates.append((float(lon_str), float(lat_str)))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Malformed waypoints parameter") from exc
     coordinates.append((dest_lon, dest_lat))
 
     try:
