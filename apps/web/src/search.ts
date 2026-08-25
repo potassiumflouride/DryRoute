@@ -37,7 +37,9 @@ export function initSearch(map: maplibregl.Map): void {
     if (marker) {
       marker.remove();
     }
-    marker = new maplibregl.Marker({ color: "#6ee7b7" })
+    marker = new maplibregl.Marker({
+      color: getComputedStyle(document.documentElement).getPropertyValue("--dry").trim(),
+    })
       .setLngLat([result.lon, result.lat])
       .addTo(map);
 
