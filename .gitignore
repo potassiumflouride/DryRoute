@@ -219,11 +219,12 @@ __marimo__/
 
 # Node / pnpm / Turborepo
 node_modules/
+.pnpm-store/
 dist/
 .turbo/
 *.tsbuildinfo
 
-# Python (uv-managed apps/api)
+# Python (uv-managed backend)
 .venv/
 
 # Env files
@@ -231,5 +232,6 @@ dist/
 .env.*
 !.env.example
 
-# Infra data (downloaded OSM extracts, built OSRM graphs)
-infra/data/
+# Service data (downloaded OSM extracts and routing graphs)
+tiles/data/
+valhalla/data/

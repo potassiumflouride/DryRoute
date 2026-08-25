@@ -1,8 +1,0 @@
-{
-  "name": "@dryroute/tiles",
-  "private": true,
-  "version": "0.0.0",
-  "scripts": {
-    "dev": "../../infra/osm/scripts/serve-pmtiles.sh"
-  }
-}
