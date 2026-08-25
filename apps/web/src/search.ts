@@ -6,6 +6,7 @@ const DEBOUNCE_MS = 300;
 export interface LocationSearch {
   setValue: (name: string) => void;
   clear: () => void;
+  setExternalSelection: (result: GeocodeResult, opts?: { flyTo?: boolean }) => void;
 }
 
 export function createLocationSearch(
@@ -20,7 +21,7 @@ export function createLocationSearch(
   const input = document.querySelector<HTMLInputElement>(opts.inputSelector);
   const list = document.querySelector<HTMLUListElement>(opts.listSelector);
 
-  const noop: LocationSearch = { setValue: () => {}, clear: () => {} };
+  const noop: LocationSearch = { setValue: () => {}, clear: () => {}, setExternalSelection: () => {} };
   if (!input || !list) return noop;
 
   let marker: maplibregl.Marker | null = null;
@@ -46,8 +47,11 @@ export function createLocationSearch(
     list.hidden = false;
   };
 
-  const selectResult = (result: GeocodeResult) => {
-    map.flyTo({ center: [result.lon, result.lat], zoom: 16 });
+  const selectResult = (result: GeocodeResult, selectOpts: { flyTo?: boolean } = {}) => {
+    const flyTo = selectOpts.flyTo ?? true;
+    if (flyTo) {
+      map.flyTo({ center: [result.lon, result.lat], zoom: 16 });
+    }
 
     if (marker) {
       marker.remove();
@@ -106,6 +110,9 @@ export function createLocationSearch(
         marker.remove();
         marker = null;
       }
+    },
+    setExternalSelection: (result: GeocodeResult, opts?: { flyTo?: boolean }) => {
+      selectResult(result, opts);
     },
   };
 }

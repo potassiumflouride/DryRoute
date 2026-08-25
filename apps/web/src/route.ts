@@ -23,6 +23,7 @@ interface LngLat {
 export interface RouteController {
   setOrigin: (result: GeocodeResult) => void;
   setDestination: (result: GeocodeResult) => void;
+  navigateNow: () => Promise<void>;
   reattach: () => void;
 }
 
@@ -33,15 +34,35 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
   const toastDismiss = document.querySelector<HTMLButtonElement>(".route-toast__cancel");
   const routeSummary = document.querySelector<HTMLDivElement>(".route-summary");
   const routeReset = document.querySelector<HTMLButtonElement>(".route-reset");
-  const editModeToggle = document.querySelector<HTMLButtonElement>(".editmode-toggle");
+  const editStartBtn = document.querySelector<HTMLButtonElement>(".edit-start-btn");
+  const editConfirmGroup = document.querySelector<HTMLDivElement>(".edit-confirm-group");
+  const editSaveBtn = document.querySelector<HTMLButtonElement>(".edit-save-btn");
+  const editDiscardBtn = document.querySelector<HTMLButtonElement>(".edit-discard-btn");
 
-  const noop: RouteController = { setOrigin: () => {}, setDestination: () => {}, reattach: () => {} };
-  if (!navigateButton || !toast || !toastMessage || !toastDismiss || !routeSummary || !routeReset || !editModeToggle)
+  const noop: RouteController = {
+    setOrigin: () => {},
+    setDestination: () => {},
+    navigateNow: async () => {},
+    reattach: () => {},
+  };
+  if (
+    !navigateButton ||
+    !toast ||
+    !toastMessage ||
+    !toastDismiss ||
+    !routeSummary ||
+    !routeReset ||
+    !editStartBtn ||
+    !editConfirmGroup ||
+    !editSaveBtn ||
+    !editDiscardBtn
+  )
     return noop;
 
   let origin: LngLat | null = null;
   let destination: LngLat | null = null;
   let waypoints: LngLat[] = [];
+  let waypointsBeforeEdit: LngLat[] = [];
   let isDraggingRoute = false;
   let dragMode: { kind: "move"; index: number } | { kind: "insert"; index: number } | null = null;
   let lastRouteAtRisk = false;
@@ -51,7 +72,7 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
   const isTouchDevice = () => window.matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0;
 
   const updateNavigateEnabled = () => {
-    navigateButton.disabled = !origin || !destination;
+    navigateButton.hidden = !destination;
   };
 
   const routeColor = () => getComputedStyle(document.documentElement).getPropertyValue("--rain").trim();
@@ -121,7 +142,7 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
   const drawRoute = (feature: GeoJSON.Feature<GeoJSON.LineString>, atRisk: boolean) => {
     lastRouteAtRisk = atRisk;
     lastRouteFeature = feature;
-    editModeToggle.disabled = false;
+    editStartBtn.disabled = false;
     const source = map.getSource(ROUTE_SOURCE_ID) as maplibregl.GeoJSONSource | undefined;
     if (source) {
       source.setData(feature);
@@ -197,7 +218,7 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     if (map.getSource(ROUTE_SOURCE_ID)) map.removeSource(ROUTE_SOURCE_ID);
     lastRouteAtRisk = false;
     lastRouteFeature = null;
-    editModeToggle.disabled = true;
+    editStartBtn.disabled = true;
     if (isEditMode) {
       isEditMode = false;
       applyEditModeState();
@@ -338,9 +359,8 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
   };
 
   const applyEditModeState = () => {
-    editModeToggle.classList.toggle("is-active", isEditMode);
-    editModeToggle.setAttribute("aria-pressed", String(isEditMode));
-    editModeToggle.setAttribute("aria-label", isEditMode ? "Exit edit mode" : "Edit route");
+    editConfirmGroup.hidden = !isEditMode;
+    editStartBtn.hidden = isEditMode || !isTouchDevice();
     document.body.classList.toggle("is-route-edit-mode", isEditMode);
 
     if (isEditMode) {
@@ -352,12 +372,6 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
       hideToast();
     }
   };
-
-  editModeToggle.addEventListener("click", () => {
-    if (editModeToggle.disabled) return;
-    isEditMode = !isEditMode;
-    applyEditModeState();
-  });
 
   const navigate = async (opts: { fit?: boolean } = {}) => {
     if (!origin || !destination) return;
@@ -395,12 +409,29 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     }
   };
 
-  editModeToggle.hidden = !isTouchDevice();
-  editModeToggle.disabled = true;
+  editStartBtn.hidden = !isTouchDevice();
+  editStartBtn.disabled = true;
+  editConfirmGroup.hidden = true;
 
-  navigateButton.addEventListener("click", () => {
-    waypoints = [];
-    void navigate();
+  editStartBtn.addEventListener("click", () => {
+    if (editStartBtn.disabled) return;
+    waypointsBeforeEdit = [...waypoints];
+    isEditMode = true;
+    applyEditModeState();
+  });
+
+  editSaveBtn.addEventListener("click", () => {
+    if (!isEditMode) return;
+    isEditMode = false;
+    applyEditModeState();
+  });
+
+  editDiscardBtn.addEventListener("click", () => {
+    if (!isEditMode) return;
+    isEditMode = false;
+    applyEditModeState();
+    waypoints = [...waypointsBeforeEdit];
+    void navigate({ fit: false });
   });
 
   toastDismiss.addEventListener("click", hideToast);
@@ -442,6 +473,10 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
       clearRoute();
       hideToast();
       updateNavigateEnabled();
+    },
+    navigateNow: async () => {
+      waypoints = [];
+      await navigate();
     },
     reattach: () => {
       if (lastRouteFeature) drawRoute(lastRouteFeature, lastRouteAtRisk);

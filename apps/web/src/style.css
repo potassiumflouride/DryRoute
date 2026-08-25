@@ -4,6 +4,7 @@
   --mist: #c9d3db;
   --rain: #4c6efd;
   --dry: #6ee7b7;
+  --danger: #f87171;
 
   --border: rgba(201, 211, 219, 0.15);
   --placeholder: rgba(201, 211, 219, 0.5);
@@ -24,6 +25,7 @@
   --mist: #1b2430;
   --rain: #3a56d4;
   --dry: #0a7a54;
+  --danger: #dc2626;
 
   --border: rgba(27, 36, 48, 0.12);
   --placeholder: rgba(27, 36, 48, 0.45);
@@ -161,55 +163,75 @@ body {
   color: var(--ink);
 }
 
-.editmode-toggle {
+.edit-start-btn,
+.edit-save-btn,
+.edit-discard-btn {
   pointer-events: auto;
   width: 44px;
   height: 44px;
   border: none;
   border-radius: 50%;
-  background: var(--slate);
-  color: var(--mist);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
+  box-shadow: 0 4px 16px var(--shadow);
 }
 
-.editmode-toggle svg {
+.edit-start-btn svg,
+.edit-save-btn svg,
+.edit-discard-btn svg {
   width: 18px;
   height: 18px;
 }
 
-.editmode-toggle .icon-edit {
-  display: none;
+.edit-start-btn {
+  background: var(--slate);
+  color: var(--mist);
 }
 
-.editmode-toggle.is-active .icon-view {
-  display: none;
-}
-
-.editmode-toggle.is-active .icon-edit {
-  display: block;
-}
-
-.editmode-toggle:hover {
+.edit-start-btn:hover {
   color: var(--dry);
 }
 
-.editmode-toggle.is-active {
+.edit-start-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
+  box-shadow: none;
+}
+
+.edit-confirm-group:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.edit-save-btn {
   background: var(--dry);
   color: var(--ink);
 }
 
-.editmode-toggle:disabled {
-  opacity: 0.4;
-  cursor: default;
-  pointer-events: none;
+.edit-discard-btn {
+  background: var(--danger);
+  color: var(--ink);
 }
 
 body.is-route-edit-mode .maplibregl-canvas {
   cursor: crosshair;
+}
+
+.map-controls {
+  position: absolute;
+  right: calc(env(safe-area-inset-right, 0px) + 1rem);
+  /* Sits above the maplibre NavigationControl (zoom/compass), which sits above the radar card. */
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 17.25rem);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .search-group {
@@ -226,6 +248,24 @@ body.is-route-edit-mode .maplibregl-canvas {
 
 .search {
   position: relative;
+}
+
+.search--origin {
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.search--origin.is-shown {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.search-hint {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--address);
 }
 
 .search__input {
@@ -304,16 +344,18 @@ body.is-route-edit-mode .maplibregl-canvas {
   padding: 0.55rem 0.65rem 0.65rem;
 }
 
-.radar-scrubber__row {
+.radar-scrubber__top {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.6rem;
+  margin-bottom: 0.4rem;
 }
 
 .radar-scrubber__play {
   flex-shrink: 0;
-  width: 44px;
-  height: 44px;
+  width: 32px;
+  height: 32px;
   border: none;
   border-radius: 50%;
   background: var(--rain);
@@ -325,8 +367,8 @@ body.is-route-edit-mode .maplibregl-canvas {
 }
 
 .radar-scrubber__play svg {
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
 }
 
 .radar-scrubber__play .icon-pause {
@@ -343,7 +385,7 @@ body.is-route-edit-mode .maplibregl-canvas {
 
 .radar-scrubber__track {
   position: relative;
-  flex: 1;
+  width: 100%;
   height: 32px;
 }
 
@@ -400,10 +442,9 @@ body.is-route-edit-mode .maplibregl-canvas {
 .radar-scrubber__status {
   flex-shrink: 0;
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.1rem;
-  min-width: 4.4rem;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .radar-scrubber__badge {
@@ -573,13 +614,13 @@ body.is-route-edit-mode .maplibregl-canvas {
   color: var(--mist);
 }
 
-.maplibregl-ctrl-top-right {
-  margin-top: calc(env(safe-area-inset-top, 0px) + 60px);
+.maplibregl-ctrl-bottom-right {
+  margin: 0;
 }
 
-.maplibregl-ctrl-bottom-right {
-  margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
-  margin-right: env(safe-area-inset-right, 0px);
+.maplibregl-ctrl-bottom-right .maplibregl-ctrl-group {
+  /* Radar card is ~1rem + 5.75rem tall; leave a gap above it. Right edge matches .map-controls (1rem). */
+  margin: 0 calc(env(safe-area-inset-right, 0px) + 1rem) calc(env(safe-area-inset-bottom, 0px) + 7.5rem) 0;
 }
 
 @media (min-width: 768px) {
@@ -623,9 +664,5 @@ body.is-route-edit-mode .maplibregl-canvas {
     left: calc(var(--sidebar-width) + 1rem);
     right: 1rem;
     margin: 0;
-  }
-
-  .maplibregl-ctrl-top-right {
-    margin-top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
   }
 }
