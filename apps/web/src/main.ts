@@ -1,8 +1,10 @@
 import maplibregl, { type StyleSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { layers, namedFlavor } from "@protomaps/basemaps";
-import { initSearch } from "./search";
+import { createLocationSearch } from "./search";
 import { initRadar } from "./radar";
+import { initRoute } from "./route";
+import { initDevMode } from "./devmode";
 import { applyTheme, getInitialTheme, type Theme } from "./theme";
 import "./style.css";
 
@@ -37,19 +39,41 @@ if (app) {
     <header class="app-header">
       <img class="app-header__mark" src="/pwa-192x192.png" alt="" />
       <span class="app-header__wordmark">Dry<strong>Route</strong></span>
-      <button class="theme-toggle" type="button" aria-label="Toggle light/dark theme">
-        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-      </button>
+      <div class="app-header__actions">
+        <button class="devmode-toggle" type="button" aria-label="Toggle dev rain-zone testing mode" aria-pressed="false" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5s6.5 7 6.5 11.5a6.5 6.5 0 1 1-13 0C5.5 9.5 12 2.5 12 2.5z"/></svg>
+        </button>
+        <button class="theme-toggle" type="button" aria-label="Toggle light/dark theme">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        </button>
+      </div>
     </header>
-    <div class="search">
-      <input
-        class="search__input"
-        type="text"
-        placeholder="Search a location in Singapore"
-        autocomplete="off"
-      />
-      <ul class="search__results" hidden></ul>
+    <div class="search-group">
+      <div class="search search--origin">
+        <input
+          class="search__input"
+          type="text"
+          placeholder="Search a location in Singapore"
+          autocomplete="off"
+        />
+        <ul class="search__results" hidden></ul>
+      </div>
+      <div class="search search--destination">
+        <input
+          class="search__input"
+          type="text"
+          placeholder="Add a destination"
+          autocomplete="off"
+        />
+        <ul class="search__results" hidden></ul>
+      </div>
+      <button class="navigate-button" type="button" disabled>Navigate</button>
+    </div>
+    <div class="route-toast" hidden>
+      <span class="route-toast__dot"></span>
+      <span class="route-toast__message"></span>
+      <button class="route-toast__cancel" type="button" aria-label="Cancel waypoint selection">Cancel</button>
     </div>
     <div class="radar-scrubber" role="group" aria-label="Rain radar playback">
       <div class="radar-scrubber__row">
@@ -93,8 +117,22 @@ if (app) {
     fitBoundsOptions: { padding: 24 },
   });
   map.addControl(new maplibregl.NavigationControl());
-  initSearch(map);
   const radar = initRadar(map);
+  const devMode = initDevMode(map);
+  const route = initRoute(map, devMode.isOn);
+
+  createLocationSearch(map, {
+    inputSelector: ".search--origin .search__input",
+    listSelector: ".search--origin .search__results",
+    markerColorVar: "--dry",
+    onSelect: (result) => route.setOrigin(result),
+  });
+  createLocationSearch(map, {
+    inputSelector: ".search--destination .search__input",
+    listSelector: ".search--destination .search__results",
+    markerColorVar: "--rain",
+    onSelect: (result) => route.setDestination(result),
+  });
 
   const toggle = document.querySelector<HTMLButtonElement>(".theme-toggle");
   toggle?.addEventListener("click", () => {
@@ -102,5 +140,7 @@ if (app) {
     applyTheme(next);
     map.setStyle(buildMapStyle(next));
     radar.reattach();
+    devMode.reattach();
+    route.reattach();
   });
 }

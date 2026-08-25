@@ -15,3 +15,24 @@ export interface RadarFrame {
   };
   coverage: number;
 }
+
+export interface RouteLeg {
+  geometry: { type: "LineString"; coordinates: [number, number][] };
+  distanceMeters: number;
+  durationSeconds: number;
+}
+
+export interface Route {
+  legs: RouteLeg[];
+  distanceMeters: number;
+  durationSeconds: number;
+}
+
+export interface RainZone {
+  type: "FeatureCollection";
+  features: Array<{
+    type: "Feature";
+    properties: Record<string, never>;
+    geometry: { type: "Polygon"; coordinates: number[][][] };
+  }>;
+}

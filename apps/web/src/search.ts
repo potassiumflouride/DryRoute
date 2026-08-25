@@ -3,10 +3,25 @@ import type { GeocodeResult } from "@dryroute/shared-types";
 
 const DEBOUNCE_MS = 300;
 
-export function initSearch(map: maplibregl.Map): void {
-  const input = document.querySelector<HTMLInputElement>(".search__input");
-  const list = document.querySelector<HTMLUListElement>(".search__results");
-  if (!input || !list) return;
+export interface LocationSearch {
+  setValue: (name: string) => void;
+  clear: () => void;
+}
+
+export function createLocationSearch(
+  map: maplibregl.Map,
+  opts: {
+    inputSelector: string;
+    listSelector: string;
+    markerColorVar: string;
+    onSelect: (result: GeocodeResult) => void;
+  },
+): LocationSearch {
+  const input = document.querySelector<HTMLInputElement>(opts.inputSelector);
+  const list = document.querySelector<HTMLUListElement>(opts.listSelector);
+
+  const noop: LocationSearch = { setValue: () => {}, clear: () => {} };
+  if (!input || !list) return noop;
 
   let marker: maplibregl.Marker | null = null;
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
@@ -38,7 +53,7 @@ export function initSearch(map: maplibregl.Map): void {
       marker.remove();
     }
     marker = new maplibregl.Marker({
-      color: getComputedStyle(document.documentElement).getPropertyValue("--dry").trim(),
+      color: getComputedStyle(document.documentElement).getPropertyValue(opts.markerColorVar).trim(),
     })
       .setLngLat([result.lon, result.lat])
       .addTo(map);
@@ -46,6 +61,7 @@ export function initSearch(map: maplibregl.Map): void {
     input.value = result.name;
     list.hidden = true;
     input.blur();
+    opts.onSelect(result);
   };
 
   const search = async (query: string) => {
@@ -78,6 +94,20 @@ export function initSearch(map: maplibregl.Map): void {
       list.hidden = true;
     }
   });
+
+  return {
+    setValue: (name: string) => {
+      input.value = name;
+    },
+    clear: () => {
+      input.value = "";
+      list.hidden = true;
+      if (marker) {
+        marker.remove();
+        marker = null;
+      }
+    },
+  };
 }
 
 function escapeHtml(value: string): string {

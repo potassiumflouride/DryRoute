@@ -1,5 +1,6 @@
 import maplibregl from "maplibre-gl";
 import type { RadarFrame } from "@dryroute/shared-types";
+import { addToMapWhenReady } from "./mapReady";
 
 const POLL_MS = 5 * 60 * 1000;
 const PLAY_INTERVAL_MS = 1200;
@@ -65,24 +66,11 @@ export function initRadar(map: maplibregl.Map): RadarController {
       return;
     }
 
-    // addSource/addLayer require the style to be loaded, which isn't guaranteed
-    // yet on first load or right after a theme-toggle setStyle() call. A single
-    // MapLibre event (e.g. "idle") isn't reliable here since it may only fire on
-    // the next busy->idle transition, which might never come if the map is
-    // already at rest, so this polls until the style reports ready instead.
-    const addNow = () => {
+    addToMapWhenReady(() => {
+      if (map.getSource(SOURCE_ID)) return;
       map.addSource(SOURCE_ID, { type: "image", url: sourceUrl(frame), coordinates });
       map.addLayer({ id: LAYER_ID, type: "raster", source: SOURCE_ID, paint: { "raster-opacity": 0.6 } });
-    };
-    if (map.isStyleLoaded()) {
-      addNow();
-    } else {
-      const waitForStyle = setInterval(() => {
-        if (!map.isStyleLoaded()) return;
-        clearInterval(waitForStyle);
-        addNow();
-      }, 100);
-    }
+    });
   };
 
   const render = () => {

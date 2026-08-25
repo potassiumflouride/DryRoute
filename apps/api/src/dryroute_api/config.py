@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     onemap_api_key: str = ""
     maptiler_api_key: str = ""
 
+    # Reserved for a future self-hosted OSRM swap-in; osrm/__init__.py currently
+    # routes against the public OSRM demo server instead of these.
     osrm_foot_url: str = "http://localhost:5001"
     osrm_bicycle_url: str = "http://localhost:5002"
     osrm_motorcycle_url: str = "http://localhost:5003"
