@@ -2,6 +2,7 @@ import maplibregl, { type StyleSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { layers, namedFlavor } from "@protomaps/basemaps";
 import { initSearch } from "./search";
+import { initRadar } from "./radar";
 import { applyTheme, getInitialTheme, type Theme } from "./theme";
 import "./style.css";
 
@@ -50,6 +51,35 @@ if (app) {
       />
       <ul class="search__results" hidden></ul>
     </div>
+    <div class="radar-scrubber" role="group" aria-label="Rain radar playback">
+      <div class="radar-scrubber__row">
+        <button class="radar-scrubber__play" type="button" aria-label="Play radar replay" aria-pressed="false">
+          <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+        </button>
+        <div class="radar-scrubber__track">
+          <div class="radar-scrubber__bars"></div>
+          <div class="radar-scrubber__playhead"></div>
+          <input
+            class="radar-scrubber__range"
+            type="range"
+            min="0"
+            max="11"
+            value="11"
+            step="1"
+            aria-label="Radar frame, last hour"
+          />
+        </div>
+        <div class="radar-scrubber__status">
+          <span class="radar-scrubber__badge is-live">
+            <span class="radar-scrubber__dot"></span>
+            <span class="radar-scrubber__badge-label">Live</span>
+          </span>
+          <span class="radar-scrubber__time">&ndash;&ndash;:&ndash;&ndash;</span>
+          <span class="radar-scrubber__offset">&nbsp;</span>
+        </div>
+      </div>
+    </div>
     <div id="map"></div>
   `;
 
@@ -64,11 +94,13 @@ if (app) {
   });
   map.addControl(new maplibregl.NavigationControl());
   initSearch(map);
+  const radar = initRadar(map);
 
   const toggle = document.querySelector<HTMLButtonElement>(".theme-toggle");
   toggle?.addEventListener("click", () => {
     const next: Theme = document.documentElement.dataset.theme === "light" ? "dark" : "light";
     applyTheme(next);
     map.setStyle(buildMapStyle(next));
+    radar.reattach();
   });
 }
