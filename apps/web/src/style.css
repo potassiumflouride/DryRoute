@@ -53,6 +53,10 @@ body {
   position: relative;
 }
 
+.app-shell {
+  position: relative;
+}
+
 .app-header {
   position: absolute;
   inset: 0 0 auto 0;
@@ -87,8 +91,8 @@ body {
 
 .theme-toggle {
   pointer-events: auto;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border: none;
   border-radius: 50%;
   background: var(--slate);
@@ -105,8 +109,8 @@ body {
 }
 
 .theme-toggle svg {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
 }
 
 .theme-toggle .icon-moon {
@@ -130,8 +134,8 @@ body {
 
 .devmode-toggle {
   pointer-events: auto;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border: none;
   border-radius: 50%;
   background: var(--slate);
@@ -144,8 +148,8 @@ body {
 }
 
 .devmode-toggle svg {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
 }
 
 .devmode-toggle:hover {
@@ -157,9 +161,60 @@ body {
   color: var(--ink);
 }
 
+.editmode-toggle {
+  pointer-events: auto;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: var(--slate);
+  color: var(--mist);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.editmode-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
+.editmode-toggle .icon-edit {
+  display: none;
+}
+
+.editmode-toggle.is-active .icon-view {
+  display: none;
+}
+
+.editmode-toggle.is-active .icon-edit {
+  display: block;
+}
+
+.editmode-toggle:hover {
+  color: var(--dry);
+}
+
+.editmode-toggle.is-active {
+  background: var(--dry);
+  color: var(--ink);
+}
+
+.editmode-toggle:disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+body.is-route-edit-mode .maplibregl-canvas {
+  cursor: crosshair;
+}
+
 .search-group {
   position: absolute;
-  top: calc(env(safe-area-inset-top, 0px) + 3.25rem);
+  top: calc(env(safe-area-inset-top, 0px) + 3.75rem);
   left: 1rem;
   right: 1rem;
   z-index: 2;
@@ -203,13 +258,17 @@ body {
   border-radius: 0.75rem;
   box-shadow: 0 4px 16px var(--shadow);
   max-height: 60vh;
+  max-height: 60dvh;
   overflow-y: auto;
 }
 
 .search__result {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 0.1rem;
+  min-height: 44px;
+  box-sizing: border-box;
   padding: 0.5rem 0.6rem;
   border-radius: 0.5rem;
   cursor: pointer;
@@ -253,8 +312,8 @@ body {
 
 .radar-scrubber__play {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border: none;
   border-radius: 50%;
   background: var(--rain);
@@ -266,8 +325,8 @@ body {
 }
 
 .radar-scrubber__play svg {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
 }
 
 .radar-scrubber__play .icon-pause {
@@ -521,4 +580,52 @@ body {
 .maplibregl-ctrl-bottom-right {
   margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
   margin-right: env(safe-area-inset-right, 0px);
+}
+
+@media (min-width: 768px) {
+  :root {
+    --sidebar-width: 22rem;
+  }
+
+  .app-shell {
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 3;
+    width: var(--sidebar-width);
+    display: flex;
+    flex-direction: column;
+    background: var(--slate);
+    border-right: 1px solid var(--border);
+    box-shadow: 4px 0 16px var(--shadow);
+    overflow-y: auto;
+  }
+
+  .app-header {
+    position: static;
+    padding: calc(env(safe-area-inset-top, 0px) + 1rem) 1.25rem 0.5rem;
+    background: none;
+  }
+
+  .search-group {
+    position: static;
+    max-width: none;
+    padding: 0.5rem 1.25rem 1.5rem;
+    gap: 0.75rem;
+  }
+
+  .search__results {
+    max-height: 40vh;
+    max-height: 40dvh;
+  }
+
+  .radar-scrubber,
+  .route-toast {
+    left: calc(var(--sidebar-width) + 1rem);
+    right: 1rem;
+    margin: 0;
+  }
+
+  .maplibregl-ctrl-top-right {
+    margin-top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
+  }
 }

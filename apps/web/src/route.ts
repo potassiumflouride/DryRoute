@@ -10,7 +10,10 @@ const ROUTE_HITBOX_LAYER_ID = "route-layer-hitbox";
 const WAYPOINT_SOURCE_ID = "route-waypoints";
 const WAYPOINT_LAYER_ID = "route-waypoints-layer";
 const WAYPOINT_HIT_RADIUS_PX = 12;
+const TOUCH_WAYPOINT_HIT_RADIUS_PX = 28;
 const MAX_WAYPOINTS = 8;
+const SIDEBAR_BREAKPOINT = "(min-width: 768px)";
+const SIDEBAR_WIDTH_PX = 352; // keep in sync with --sidebar-width in style.css (22rem @ 16px base)
 
 interface LngLat {
   lat: number;
@@ -30,9 +33,11 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
   const toastDismiss = document.querySelector<HTMLButtonElement>(".route-toast__cancel");
   const routeSummary = document.querySelector<HTMLDivElement>(".route-summary");
   const routeReset = document.querySelector<HTMLButtonElement>(".route-reset");
+  const editModeToggle = document.querySelector<HTMLButtonElement>(".editmode-toggle");
 
   const noop: RouteController = { setOrigin: () => {}, setDestination: () => {}, reattach: () => {} };
-  if (!navigateButton || !toast || !toastMessage || !toastDismiss || !routeSummary || !routeReset) return noop;
+  if (!navigateButton || !toast || !toastMessage || !toastDismiss || !routeSummary || !routeReset || !editModeToggle)
+    return noop;
 
   let origin: LngLat | null = null;
   let destination: LngLat | null = null;
@@ -41,6 +46,9 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
   let dragMode: { kind: "move"; index: number } | { kind: "insert"; index: number } | null = null;
   let lastRouteAtRisk = false;
   let lastRouteFeature: GeoJSON.Feature<GeoJSON.LineString> | null = null;
+  let isEditMode = false;
+
+  const isTouchDevice = () => window.matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0;
 
   const updateNavigateEnabled = () => {
     navigateButton.disabled = !origin || !destination;
@@ -48,14 +56,17 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
 
   const routeColor = () => getComputedStyle(document.documentElement).getPropertyValue("--rain").trim();
 
+  const isSidebarLayout = () => window.matchMedia(SIDEBAR_BREAKPOINT).matches;
+
   const fitToRoute = (feature: GeoJSON.Feature<GeoJSON.LineString>) => {
     const [minX, minY, maxX, maxY] = turf.bbox(feature);
+    const left = 40 + (isSidebarLayout() ? SIDEBAR_WIDTH_PX : 0);
     map.fitBounds(
       [
         [minX, minY],
         [maxX, maxY],
       ],
-      { padding: { top: 160, bottom: 220, left: 40, right: 40 }, duration: 800 },
+      { padding: { top: 160, bottom: 220, left, right: 40 }, duration: 800 },
     );
   };
 
@@ -76,9 +87,9 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     return { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates } };
   };
 
-  const findNearbyWaypointIndex = (point: maplibregl.Point): number | null => {
+  const findNearbyWaypointIndex = (point: maplibregl.Point, radiusPx: number): number | null => {
     let closestIndex: number | null = null;
-    let closestDist = WAYPOINT_HIT_RADIUS_PX;
+    let closestDist = radiusPx;
     waypoints.forEach((wp, i) => {
       const screen = map.project([wp.lon, wp.lat]);
       const dist = Math.hypot(screen.x - point.x, screen.y - point.y);
@@ -110,6 +121,7 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
   const drawRoute = (feature: GeoJSON.Feature<GeoJSON.LineString>, atRisk: boolean) => {
     lastRouteAtRisk = atRisk;
     lastRouteFeature = feature;
+    editModeToggle.disabled = false;
     const source = map.getSource(ROUTE_SOURCE_ID) as maplibregl.GeoJSONSource | undefined;
     if (source) {
       source.setData(feature);
@@ -185,6 +197,11 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     if (map.getSource(ROUTE_SOURCE_ID)) map.removeSource(ROUTE_SOURCE_ID);
     lastRouteAtRisk = false;
     lastRouteFeature = null;
+    editModeToggle.disabled = true;
+    if (isEditMode) {
+      isEditMode = false;
+      applyEditModeState();
+    }
     hideSummary();
   };
 
@@ -250,7 +267,7 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     map.dragPan.disable();
     map.getCanvas().style.cursor = "grabbing";
 
-    const nearbyIndex = findNearbyWaypointIndex(event.point);
+    const nearbyIndex = findNearbyWaypointIndex(event.point, WAYPOINT_HIT_RADIUS_PX);
     if (nearbyIndex !== null) {
       dragMode = { kind: "move", index: nearbyIndex };
     } else if (waypoints.length >= MAX_WAYPOINTS) {
@@ -263,6 +280,84 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     map.on("mousemove", onRouteDragMove);
     map.once("mouseup", onRouteDragEnd);
   };
+
+  const onRouteTouchStart = (event: maplibregl.MapTouchEvent) => {
+    if (!isEditMode) return;
+    if (event.originalEvent.touches.length > 1) return;
+    event.preventDefault();
+    isDraggingRoute = true;
+
+    const nearbyIndex = findNearbyWaypointIndex(event.point, TOUCH_WAYPOINT_HIT_RADIUS_PX);
+    if (nearbyIndex !== null) {
+      dragMode = { kind: "move", index: nearbyIndex };
+    } else if (waypoints.length >= MAX_WAYPOINTS) {
+      dragMode = null;
+    } else {
+      const dropPoint = { lat: event.lngLat.lat, lon: event.lngLat.lng };
+      dragMode = { kind: "insert", index: computeInsertIndex(dropPoint) };
+    }
+
+    map.on("touchmove", onRouteTouchMove);
+    map.once("touchend", onRouteTouchEnd);
+    map.once("touchcancel", onRouteTouchCancel);
+  };
+
+  const onRouteTouchMove = (event: maplibregl.MapTouchEvent) => {
+    if (!dragMode) return;
+    if (event.originalEvent.touches.length > 1) {
+      endTouchDrag(null);
+      return;
+    }
+    event.preventDefault();
+    setLineData(dragPreview(dragMode, { lat: event.lngLat.lat, lon: event.lngLat.lng }));
+  };
+
+  const onRouteTouchEnd = (event: maplibregl.MapTouchEvent) => {
+    endTouchDrag({ lat: event.lngLat.lat, lon: event.lngLat.lng });
+  };
+
+  const onRouteTouchCancel = () => {
+    endTouchDrag(null);
+  };
+
+  const endTouchDrag = (commitPoint: LngLat | null) => {
+    map.off("touchmove", onRouteTouchMove);
+    map.off("touchend", onRouteTouchEnd);
+    map.off("touchcancel", onRouteTouchCancel);
+    isDraggingRoute = false;
+
+    if (dragMode && commitPoint) {
+      if (dragMode.kind === "move") waypoints[dragMode.index] = commitPoint;
+      else waypoints.splice(dragMode.index, 0, commitPoint);
+      dragMode = null;
+      void navigate({ fit: false });
+    } else if (dragMode) {
+      dragMode = null;
+      if (lastRouteFeature) setLineData(lastRouteFeature);
+    }
+  };
+
+  const applyEditModeState = () => {
+    editModeToggle.classList.toggle("is-active", isEditMode);
+    editModeToggle.setAttribute("aria-pressed", String(isEditMode));
+    editModeToggle.setAttribute("aria-label", isEditMode ? "Exit edit mode" : "Edit route");
+    document.body.classList.toggle("is-route-edit-mode", isEditMode);
+
+    if (isEditMode) {
+      map.dragPan.disable();
+      if (!lastRouteAtRisk) showToast("Edit mode on - drag anywhere on the map to reshape the route", false);
+    } else {
+      if (dragMode) endTouchDrag(null);
+      map.dragPan.enable();
+      hideToast();
+    }
+  };
+
+  editModeToggle.addEventListener("click", () => {
+    if (editModeToggle.disabled) return;
+    isEditMode = !isEditMode;
+    applyEditModeState();
+  });
 
   const navigate = async (opts: { fit?: boolean } = {}) => {
     if (!origin || !destination) return;
@@ -300,6 +395,9 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     }
   };
 
+  editModeToggle.hidden = !isTouchDevice();
+  editModeToggle.disabled = true;
+
   navigateButton.addEventListener("click", () => {
     waypoints = [];
     void navigate();
@@ -321,6 +419,7 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
   });
   map.on("mousedown", ROUTE_HITBOX_LAYER_ID, onRouteMouseDown);
   map.on("mousedown", WAYPOINT_LAYER_ID, onRouteMouseDown);
+  map.on("touchstart", onRouteTouchStart);
   map.on("dblclick", WAYPOINT_LAYER_ID, (event) => {
     event.preventDefault();
     const index = event.features?.[0]?.properties?.index as number | undefined;
