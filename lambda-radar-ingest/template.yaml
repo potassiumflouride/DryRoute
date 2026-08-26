@@ -12,6 +12,13 @@ Parameters:
     Type: String
     Default: 240km
     Description: NEA radar coverage range to fetch
+  RadarBucketName:
+    Type: String
+    Default: dryroute-rain-radar
+    Description: >
+      Name of an existing S3 bucket to write radar frames into. This bucket is
+      NOT managed by this stack (not created or deleted by it) - it must
+      already exist.
 
 Globals:
   Function:
@@ -19,18 +26,15 @@ Globals:
     MemorySize: 256
 
 Resources:
-  RadarBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: !Sub "dryroute-rain-radar-${AWS::AccountId}"
-
   RadarIngestFunction:
     Type: AWS::Serverless::Function
     Properties:
       PackageType: Image
+      Architectures:
+        - arm64
       Environment:
         Variables:
-          RADAR_BUCKET_NAME: !Ref RadarBucket
+          RADAR_BUCKET_NAME: !Ref RadarBucketName
           NEA_API_KEY: !Ref NeaApiKey
           RADAR_RANGE: !Ref RadarRange
       Policies:
@@ -38,8 +42,12 @@ Resources:
             - Effect: Allow
               Action:
                 - s3:PutObject
-                - s3:HeadObject
-              Resource: !Sub "${RadarBucket.Arn}/*"
+                - s3:GetObject
+              Resource: !Sub "arn:aws:s3:::${RadarBucketName}/*"
+            - Effect: Allow
+              Action:
+                - s3:ListBucket
+              Resource: !Sub "arn:aws:s3:::${RadarBucketName}"
       Events:
         ScheduleEvent:
           Type: Schedule
@@ -52,6 +60,6 @@ Resources:
 
 Outputs:
   RadarBucketName:
-    Value: !Ref RadarBucket
+    Value: !Ref RadarBucketName
   RadarIngestFunctionArn:
     Value: !GetAtt RadarIngestFunction.Arn
