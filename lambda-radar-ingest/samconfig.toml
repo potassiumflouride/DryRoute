@@ -1,0 +1,9 @@
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "dryroute-radar-ingest"
+resolve_s3 = true
+capabilities = "CAPABILITY_IAM"
+region = "ap-southeast-1"
+confirm_changeset = true
+image_repositories = []

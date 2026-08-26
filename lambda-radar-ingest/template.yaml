@@ -1,0 +1,57 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Archives NEA 240km rain radar frames to S3 every 5 minutes.
+
+Parameters:
+  NeaApiKey:
+    Type: String
+    NoEcho: true
+    Description: data.gov.sg API key (create at https://data.gov.sg/signin -> Create API Key)
+  RadarRange:
+    Type: String
+    Default: 240km
+    Description: NEA radar coverage range to fetch
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 256
+
+Resources:
+  RadarBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "dryroute-rain-radar-${AWS::AccountId}"
+
+  RadarIngestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      Environment:
+        Variables:
+          RADAR_BUCKET_NAME: !Ref RadarBucket
+          NEA_API_KEY: !Ref NeaApiKey
+          RADAR_RANGE: !Ref RadarRange
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - s3:PutObject
+                - s3:HeadObject
+              Resource: !Sub "${RadarBucket.Arn}/*"
+      Events:
+        ScheduleEvent:
+          Type: Schedule
+          Properties:
+            Schedule: rate(5 minutes)
+    Metadata:
+      Dockerfile: Dockerfile
+      DockerContext: ./
+      DockerTag: latest
+
+Outputs:
+  RadarBucketName:
+    Value: !Ref RadarBucket
+  RadarIngestFunctionArn:
+    Value: !GetAtt RadarIngestFunction.Arn
