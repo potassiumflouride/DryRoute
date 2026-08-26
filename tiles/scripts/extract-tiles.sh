@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Extracts a PMTiles archive covering Singapore and Peninsular Malaysia from
+# Extracts a PMTiles archive covering Singapore, the Riau Islands, and
+# Peninsular Malaysia from
 # Protomaps' daily global OSM basemap build, using HTTP range requests (no
 # full-planet download).
 #
@@ -20,8 +21,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUT_DIR="$(cd "${SCRIPT_DIR}/../data" && pwd)"
 OUT_FILE="${OUT_DIR}/dryroute.pmtiles"
 
-echo "Extracting Singapore + Peninsular Malaysia bbox from ${SOURCE_URL} -> ${OUT_FILE}"
+echo "Extracting Singapore + Riau Islands + Peninsular Malaysia bbox from ${SOURCE_URL} -> ${OUT_FILE}"
 "${PMTILES_BIN}" extract "${SOURCE_URL}" "${OUT_FILE}" \
-  --bbox=99.5,1.15,104.6,6.8
+  --bbox=99.5,0.8,104.6,6.8
 
 echo "Done. Verify with: ${PMTILES_BIN} show ${OUT_FILE}"

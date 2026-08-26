@@ -33,7 +33,7 @@ RUN set -eux; \
     pmtiles extract \
       "https://build.protomaps.com/${BUILD_DATE}.pmtiles" \
       /build/dryroute.pmtiles \
-      --bbox=99.5,1.15,104.6,6.8; \
+      --bbox=99.5,0.8,104.6,6.8; \
     pmtiles show /build/dryroute.pmtiles
 
 ########################
