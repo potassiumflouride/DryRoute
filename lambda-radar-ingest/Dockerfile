@@ -2,7 +2,7 @@ FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
 
 WORKDIR /build
 COPY pyproject.toml uv.lock ./
-RUN uv export --frozen --no-dev --no-hashes -o requirements.txt
+RUN uv export --frozen --no-dev --no-hashes --no-emit-project -o requirements.txt
 
 FROM public.ecr.aws/lambda/python:3.12
 
