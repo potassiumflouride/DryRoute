@@ -23,6 +23,6 @@ OUT_FILE="${OUT_DIR}/dryroute.pmtiles"
 
 echo "Extracting Singapore + Riau Islands + Peninsular Malaysia bbox from ${SOURCE_URL} -> ${OUT_FILE}"
 "${PMTILES_BIN}" extract "${SOURCE_URL}" "${OUT_FILE}" \
-  --bbox=99.5,0.8,104.6,6.8
+  --bbox=99.5,-2.0,104.6,6.8
 
 echo "Done. Verify with: ${PMTILES_BIN} show ${OUT_FILE}"
