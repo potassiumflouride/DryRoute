@@ -12,7 +12,8 @@
     "build": "tsc --noEmit && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "echo \"no tests yet\" && exit 0"
+    "test": "echo \"no tests yet\" && exit 0",
+    "deploy": "../infra/frontend-hosting/deploy.sh"
   },
   "dependencies": {
     "@protomaps/basemaps": "^5.7.2",
