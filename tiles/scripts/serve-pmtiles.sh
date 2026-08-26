@@ -2,7 +2,7 @@
 # Serves tiles/data/*.pmtiles over HTTP (with Range + CORS support) for
 # local development. The web app's Vite dev server proxies /tiles to this.
 #
-# Requires the go-pmtiles CLI — see extract-singapore.sh for install notes.
+# Requires the go-pmtiles CLI — see extract-tiles.sh for install notes.
 set -euo pipefail
 
 PMTILES_BIN="${PMTILES_BIN:-pmtiles}"

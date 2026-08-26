@@ -11,7 +11,7 @@ import { getCurrentLocation } from "./geolocation";
 import "./style.css";
 
 const TILES_SOURCE = "protomaps";
-const TILES_URL = "/tiles/singapore/{z}/{x}/{y}.mvt";
+const TILES_URL = "/tiles/dryroute/{z}/{x}/{y}.mvt";
 const SIDEBAR_BREAKPOINT = "(min-width: 768px)";
 const SIDEBAR_WIDTH_PX = 352; // keep in sync with --sidebar-width in style.css (22rem @ 16px base)
 
