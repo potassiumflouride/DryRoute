@@ -45,7 +45,16 @@ body,
   width: 100%;
 }
 
+html {
+  overscroll-behavior: none;
+}
+
 body {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
   background: var(--ink);
   color: var(--mist);
   font-family: var(--font-body);
@@ -285,11 +294,19 @@ body.is-route-edit-mode .maplibregl-canvas {
   cursor: crosshair;
 }
 
+body.is-route-edit-mode .app-shell,
+body.is-route-edit-mode .route-toast,
+body.is-route-edit-mode .share-control,
+body.is-route-edit-mode .radar-scrubber,
+body.is-route-edit-mode .maplibregl-ctrl-bottom-right {
+  display: none;
+}
+
 .map-controls {
   position: absolute;
   right: calc(env(safe-area-inset-right, 0px) + 1rem);
-  /* Sits above the maplibre NavigationControl (zoom/compass), which sits above the radar card. */
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 17.25rem);
+  /* Sits above the maplibre NavigationControl (zoom/compass), which sits above the radar card (~2.5rem tall). */
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 14rem);
   z-index: 2;
   display: flex;
   flex-direction: column;
@@ -340,7 +357,7 @@ body.is-route-edit-mode .maplibregl-canvas {
   background: var(--slate);
   color: var(--mist);
   font-family: var(--font-body);
-  font-size: 0.95rem;
+  font-size: 1rem;
   box-shadow: 0 4px 16px var(--shadow);
 }
 
@@ -363,6 +380,7 @@ body.is-route-edit-mode .maplibregl-canvas {
   max-height: 60vh;
   max-height: 60dvh;
   overflow-y: auto;
+  touch-action: pan-y;
 }
 
 .search__result {
@@ -400,25 +418,20 @@ body.is-route-edit-mode .maplibregl-canvas {
   z-index: 2;
   max-width: 30rem;
   margin: 0 auto;
-  border: 1px solid var(--border);
-  border-radius: 0.9rem;
-  background: var(--slate);
-  box-shadow: 0 4px 16px var(--shadow);
-  padding: 0.55rem 0.65rem 0.65rem;
-}
-
-.radar-scrubber__top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
-  margin-bottom: 0.4rem;
+  gap: 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  background: var(--slate);
+  box-shadow: 0 4px 16px var(--shadow);
+  padding: 0.45rem 0.65rem;
 }
 
 .radar-scrubber__play {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 1.6rem;
+  height: 1.6rem;
   border: none;
   border-radius: 50%;
   background: var(--rain);
@@ -430,8 +443,8 @@ body.is-route-edit-mode .maplibregl-canvas {
 }
 
 .radar-scrubber__play svg {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
 }
 
 .radar-scrubber__play .icon-pause {
@@ -448,28 +461,35 @@ body.is-route-edit-mode .maplibregl-canvas {
 
 .radar-scrubber__track {
   position: relative;
-  width: 100%;
-  height: 32px;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--border);
 }
 
 .radar-scrubber__playhead {
   position: absolute;
-  top: 1px;
-  bottom: 1px;
-  width: 2px;
-  border-radius: 1px;
+  top: 50%;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
   background: var(--dry);
   box-shadow: 0 0 6px var(--dry);
-  transform: translateX(-1px);
+  transform: translate(-50%, -50%);
   pointer-events: none;
 }
 
 .radar-scrubber__range {
   position: absolute;
-  inset: 0;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 32px;
   width: 100%;
-  height: 100%;
   margin: 0;
+  transform: translateY(-50%);
   opacity: 0;
   cursor: pointer;
 }
@@ -480,20 +500,13 @@ body.is-route-edit-mode .maplibregl-canvas {
   outline-offset: 2px;
 }
 
-.radar-scrubber__status {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 0.5rem;
-}
-
 .radar-scrubber__badge {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 0.3rem;
   font-family: var(--font-mono);
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--address);
@@ -529,15 +542,17 @@ body.is-route-edit-mode .maplibregl-canvas {
 }
 
 .radar-scrubber__time {
+  flex-shrink: 0;
   font-family: var(--font-mono);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   color: var(--mist);
   font-variant-numeric: tabular-nums;
 }
 
 .radar-scrubber__offset {
+  flex-shrink: 0;
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   color: var(--address);
   font-variant-numeric: tabular-nums;
 }
@@ -604,7 +619,8 @@ body.is-route-edit-mode .maplibregl-canvas {
   position: absolute;
   left: 1rem;
   right: 1rem;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 6.5rem);
+  /* Sits directly above the radar card (~2.5rem tall). */
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 3.25rem);
   z-index: 2;
   max-width: 30rem;
   margin: 0 auto;
@@ -660,8 +676,8 @@ body.is-route-edit-mode .maplibregl-canvas {
 }
 
 .maplibregl-ctrl-bottom-right .maplibregl-ctrl-group {
-  /* Radar card is ~1rem + 5.75rem tall; leave a gap above it. Right edge matches .map-controls (1rem). */
-  margin: 0 calc(env(safe-area-inset-right, 0px) + 1rem) calc(env(safe-area-inset-bottom, 0px) + 7.5rem) 0;
+  /* Radar card is ~1rem + 2.5rem tall; leave a gap above it. Right edge matches .map-controls (1rem). */
+  margin: 0 calc(env(safe-area-inset-right, 0px) + 1rem) calc(env(safe-area-inset-bottom, 0px) + 4.25rem) 0;
 }
 
 @media (min-width: 768px) {

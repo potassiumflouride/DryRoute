@@ -116,20 +116,16 @@ if (app) {
       </div>
     </div>
     <div class="radar-scrubber" role="group" aria-label="Rain radar playback">
-      <div class="radar-scrubber__top">
-        <div class="radar-scrubber__status">
-          <span class="radar-scrubber__badge is-live">
-            <span class="radar-scrubber__dot"></span>
-            <span class="radar-scrubber__badge-label">Live</span>
-          </span>
-          <span class="radar-scrubber__time">&ndash;&ndash;:&ndash;&ndash;</span>
-          <span class="radar-scrubber__offset">&nbsp;</span>
-        </div>
-        <button class="radar-scrubber__play" type="button" aria-label="Play radar replay" aria-pressed="false">
-          <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-          <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
-        </button>
-      </div>
+      <button class="radar-scrubber__play" type="button" aria-label="Play radar replay" aria-pressed="false">
+        <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+      </button>
+      <span class="radar-scrubber__badge is-live">
+        <span class="radar-scrubber__dot"></span>
+        <span class="radar-scrubber__badge-label">Live</span>
+      </span>
+      <span class="radar-scrubber__time">&ndash;&ndash;:&ndash;&ndash;</span>
+      <span class="radar-scrubber__offset">&nbsp;</span>
       <div class="radar-scrubber__track">
         <div class="radar-scrubber__playhead"></div>
         <input
