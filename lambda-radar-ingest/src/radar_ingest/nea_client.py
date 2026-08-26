@@ -20,6 +20,7 @@ RETRY_BACKOFF_SECONDS = 2.0
 class RadarRecord:
     timestamp: datetime
     image_url: str
+    raw_response: bytes
 
 
 def _get_with_retry(client: httpx.Client, url: str, **kwargs: Any) -> httpx.Response:
@@ -59,6 +60,7 @@ def fetch_radar_record(date: str, api_key: str, radar_range: str) -> RadarRecord
             params={"date": date},
             timeout=10.0,
         )
+        raw_response = response.content
         payload = response.json()["data"]
 
     records = payload.get("records") or []
@@ -70,6 +72,7 @@ def fetch_radar_record(date: str, api_key: str, radar_range: str) -> RadarRecord
     parsed = RadarRecord(
         timestamp=datetime.fromisoformat(record["timestamp"]),
         image_url=record["image"]["url"],
+        raw_response=raw_response,
     )
     logger.info("NEA record timestamp=%s image_url=%s", parsed.timestamp, parsed.image_url)
     return parsed

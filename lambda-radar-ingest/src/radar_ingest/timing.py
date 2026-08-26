@@ -14,11 +14,19 @@ def compute_target_timestamp(now: datetime) -> datetime:
     return floor_to_interval(now.astimezone(SGT))
 
 
-def format_s3_key(timestamp: datetime, radar_range: str) -> str:
+def _filename_stem(timestamp: datetime, radar_range: str) -> str:
     sgt_timestamp = timestamp.astimezone(SGT)
-    date_prefix = sgt_timestamp.strftime("%Y-%m-%d")
-    filename = f"radar_{radar_range}_{sgt_timestamp.strftime('%Y-%m-%dT%H-%M-%S')}.png"
-    return f"{date_prefix}/{filename}"
+    return f"radar_{radar_range}_{sgt_timestamp.strftime('%Y-%m-%dT%H-%M-%S')}"
+
+
+def format_image_key(timestamp: datetime, radar_range: str) -> str:
+    date_prefix = timestamp.astimezone(SGT).strftime("%Y-%m-%d")
+    return f"{date_prefix}/img/{_filename_stem(timestamp, radar_range)}.png"
+
+
+def format_json_key(timestamp: datetime, radar_range: str) -> str:
+    date_prefix = timestamp.astimezone(SGT).strftime("%Y-%m-%d")
+    return f"{date_prefix}/json/{_filename_stem(timestamp, radar_range)}.json"
 
 
 def format_date_param(timestamp: datetime) -> str:
@@ -30,5 +38,6 @@ __all__ = [
     "compute_target_timestamp",
     "floor_to_interval",
     "format_date_param",
-    "format_s3_key",
+    "format_image_key",
+    "format_json_key",
 ]

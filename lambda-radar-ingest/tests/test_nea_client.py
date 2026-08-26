@@ -45,6 +45,7 @@ def test_fetch_radar_record_parses_response() -> None:
 
     assert record.image_url == IMAGE_URL
     assert record.timestamp.isoformat() == "2026-08-26T15:00:00+08:00"
+    assert record.raw_response == _nea_response().content
     assert route.calls.last.request.headers["x-api-key"] == "test-key"
     assert route.calls.last.request.url.params["date"] == "2026-08-26T15:00:00"
 

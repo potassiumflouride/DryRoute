@@ -13,7 +13,6 @@ export interface RadarFrame {
     upperLeft: { longitude: number; latitude: number };
     lowerRight: { longitude: number; latitude: number };
   };
-  coverage: number;
 }
 
 export interface RouteLeg {

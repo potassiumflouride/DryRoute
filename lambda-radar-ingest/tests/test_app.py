@@ -18,6 +18,7 @@ def _fake_record() -> nea_client.RadarRecord:
     return nea_client.RadarRecord(
         timestamp=datetime(2026, 8, 26, 15, 0, 0, tzinfo=timing.SGT),
         image_url="https://example-bucket.s3.amazonaws.com/frame.png",
+        raw_response=b"raw-json-bytes",
     )
 
 
@@ -29,8 +30,20 @@ def test_handler_uploads_new_frame() -> None:
     ):
         result = app.handler({}, None)
 
-    assert result == {"statusCode": 200, "key": "2026-08-26/radar_240km_2026-08-26T15-00-00.png", "uploaded": True}
-    upload.assert_called_once_with("test-bucket", "2026-08-26/radar_240km_2026-08-26T15-00-00.png", b"png-bytes")
+    assert result == {
+        "statusCode": 200,
+        "imageKey": "2026-08-26/img/radar_240km_2026-08-26T15-00-00.png",
+        "imageUploaded": True,
+        "jsonKey": "2026-08-26/json/radar_240km_2026-08-26T15-00-00.json",
+        "jsonUploaded": True,
+    }
+    upload.assert_any_call("test-bucket", "2026-08-26/img/radar_240km_2026-08-26T15-00-00.png", b"png-bytes")
+    upload.assert_any_call(
+        "test-bucket",
+        "2026-08-26/json/radar_240km_2026-08-26T15-00-00.json",
+        b"raw-json-bytes",
+        content_type="application/json",
+    )
 
 
 def test_handler_skips_existing_frame() -> None:
@@ -41,4 +54,5 @@ def test_handler_skips_existing_frame() -> None:
     ):
         result = app.handler({}, None)
 
-    assert result["uploaded"] is False
+    assert result["imageUploaded"] is False
+    assert result["jsonUploaded"] is False

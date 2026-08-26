@@ -22,9 +22,14 @@ def test_compute_target_timestamp_uses_sgt() -> None:
     assert timing.compute_target_timestamp(now) == _sgt(hour=15, minute=0)
 
 
-def test_format_s3_key() -> None:
-    key = timing.format_s3_key(_sgt(hour=15, minute=0), "240km")
-    assert key == "2026-08-26/radar_240km_2026-08-26T15-00-00.png"
+def test_format_image_key() -> None:
+    key = timing.format_image_key(_sgt(hour=15, minute=0), "240km")
+    assert key == "2026-08-26/img/radar_240km_2026-08-26T15-00-00.png"
+
+
+def test_format_json_key() -> None:
+    key = timing.format_json_key(_sgt(hour=15, minute=0), "240km")
+    assert key == "2026-08-26/json/radar_240km_2026-08-26T15-00-00.json"
 
 
 def test_format_date_param() -> None:

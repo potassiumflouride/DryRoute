@@ -45,18 +45,30 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
             )
 
         image_bytes = nea_client.download_image_bytes(record.image_url)
-        key = timing.format_s3_key(record.timestamp, RADAR_RANGE)
-        uploaded = s3_writer.upload_if_absent(RADAR_BUCKET_NAME, key, image_bytes)
+        image_key = timing.format_image_key(record.timestamp, RADAR_RANGE)
+        json_key = timing.format_json_key(record.timestamp, RADAR_RANGE)
+        image_uploaded = s3_writer.upload_if_absent(RADAR_BUCKET_NAME, image_key, image_bytes)
+        json_uploaded = s3_writer.upload_if_absent(
+            RADAR_BUCKET_NAME, json_key, record.raw_response, content_type="application/json"
+        )
     except Exception:
         logger.exception("invocation failed request_id=%s target=%s", request_id, target.isoformat())
         raise
 
     logger.info(
-        "invocation done request_id=%s key=%s result=%s bytes=%d",
+        "invocation done request_id=%s image_key=%s image_result=%s json_key=%s json_result=%s bytes=%d",
         request_id,
-        key,
-        "uploaded" if uploaded else "skipped (already exists)",
+        image_key,
+        "uploaded" if image_uploaded else "skipped (already exists)",
+        json_key,
+        "uploaded" if json_uploaded else "skipped (already exists)",
         len(image_bytes),
     )
 
-    return {"statusCode": 200, "key": key, "uploaded": uploaded}
+    return {
+        "statusCode": 200,
+        "imageKey": image_key,
+        "imageUploaded": image_uploaded,
+        "jsonKey": json_key,
+        "jsonUploaded": json_uploaded,
+    }

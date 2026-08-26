@@ -131,7 +131,6 @@ if (app) {
         </button>
       </div>
       <div class="radar-scrubber__track">
-        <div class="radar-scrubber__bars"></div>
         <div class="radar-scrubber__playhead"></div>
         <input
           class="radar-scrubber__range"

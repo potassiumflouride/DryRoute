@@ -27,13 +27,13 @@ def _object_exists(bucket: str, key: str) -> bool:
         raise
 
 
-def upload_if_absent(bucket: str, key: str, body: bytes) -> bool:
+def upload_if_absent(bucket: str, key: str, body: bytes, content_type: str = "image/png") -> bool:
     if _object_exists(bucket, key):
         logger.info("s3://%s/%s already exists, skipping upload", bucket, key)
         return False
 
     try:
-        _client().put_object(Bucket=bucket, Key=key, Body=body, ContentType="image/png")
+        _client().put_object(Bucket=bucket, Key=key, Body=body, ContentType=content_type)
     except ClientError as error:
         logger.error("put_object failed for s3://%s/%s: %s", bucket, key, error)
         raise
