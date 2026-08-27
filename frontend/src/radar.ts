@@ -88,21 +88,9 @@ export function initRadar(map: maplibregl.Map): RadarController {
   const timeLabel = document.querySelector<HTMLSpanElement>(".radar-scrubber__time");
   const offsetLabel = document.querySelector<HTMLSpanElement>(".radar-scrubber__offset");
   const statusText = document.querySelector<HTMLParagraphElement>(".radar-player__status");
-  const toggleBtn = document.querySelector<HTMLButtonElement>(".radar-toggle-btn");
 
   const noop: RadarController = { reattach: () => {} };
-  if (
-    !root ||
-    !playButton ||
-    !playhead ||
-    !range ||
-    !badge ||
-    !badgeLabel ||
-    !timeLabel ||
-    !offsetLabel ||
-    !statusText ||
-    !toggleBtn
-  ) {
+  if (!root || !playButton || !playhead || !range || !badge || !badgeLabel || !timeLabel || !offsetLabel || !statusText) {
     return noop;
   }
 
@@ -110,7 +98,6 @@ export function initRadar(map: maplibregl.Map): RadarController {
   let currentIndex = 0;
   let isLive = true;
   let playing = false;
-  let scrubberVisible = true;
   let playTimer: ReturnType<typeof setInterval> | undefined;
 
   const formatTime = (iso: string) =>
@@ -254,27 +241,12 @@ export function initRadar(map: maplibregl.Map): RadarController {
     render();
   });
 
-  const setScrubberVisible = (next: boolean) => {
-    scrubberVisible = next;
-    toggleBtn.classList.toggle("is-active", scrubberVisible);
-    toggleBtn.setAttribute("aria-pressed", String(scrubberVisible));
-    root.hidden = !scrubberVisible;
-    if (!scrubberVisible) {
-      stopPlaying();
-    } else {
-      render();
-    }
-  };
-
-  toggleBtn.addEventListener("click", () => setScrubberVisible(!scrubberVisible));
-
   void backfill();
   scheduleNextPoll();
 
   return {
     reattach: () => {
       if (frames.length > 0) applySource();
-      root.hidden = !scrubberVisible;
     },
   };
 }

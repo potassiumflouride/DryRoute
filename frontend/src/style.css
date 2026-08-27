@@ -144,8 +144,7 @@ body {
 .edit-start-btn,
 .edit-save-btn,
 .edit-discard-btn,
-.recenter-btn,
-.radar-toggle-btn {
+.recenter-btn {
   pointer-events: auto;
   width: 44px;
   height: 44px;
@@ -162,15 +161,13 @@ body {
 .edit-start-btn svg,
 .edit-save-btn svg,
 .edit-discard-btn svg,
-.recenter-btn svg,
-.radar-toggle-btn svg {
+.recenter-btn svg {
   width: 18px;
   height: 18px;
 }
 
 .edit-start-btn,
-.recenter-btn,
-.radar-toggle-btn {
+.recenter-btn {
   background: var(--surface-glass);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -178,9 +175,38 @@ body {
 }
 
 .edit-start-btn:hover,
-.recenter-btn:hover,
-.radar-toggle-btn:hover {
+.recenter-btn:hover {
   color: var(--dry);
+}
+
+.recenter-group {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.recenter-hint {
+  position: absolute;
+  right: calc(100% + 0.6rem);
+  top: 50%;
+  transform: translateY(-50%);
+  width: max-content;
+  max-width: 12rem;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.65rem;
+  background: var(--slate);
+  color: var(--mist);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+.recenter-hint[hidden] {
+  display: none;
+}
+
+.maplibregl-ctrl-top-left .maplibregl-ctrl-geolocate {
+  display: none;
 }
 
 .edit-start-btn[hidden] {
@@ -192,11 +218,6 @@ body {
   cursor: default;
   pointer-events: none;
   box-shadow: none;
-}
-
-.radar-toggle-btn.is-active {
-  background: var(--rain);
-  color: var(--ink);
 }
 
 .route-sheet__back-btn {

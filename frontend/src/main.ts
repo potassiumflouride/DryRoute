@@ -66,12 +66,12 @@ if (app) {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
         </button>
       </div>
-      <button class="recenter-btn" type="button" aria-label="Recenter on my location">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
-      </button>
-      <button class="radar-toggle-btn is-active" type="button" aria-label="Toggle rain radar" aria-pressed="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5s6.5 7 6.5 11.5a6.5 6.5 0 1 1-13 0C5.5 9.5 12 2.5 12 2.5z"/></svg>
-      </button>
+      <div class="recenter-group">
+        <button class="recenter-btn" type="button" aria-label="Recenter on my location">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+        </button>
+        <p class="recenter-hint" hidden aria-live="polite"></p>
+      </div>
     </div>
     <div class="bottom-stack">
       <div class="radar-player" role="group" aria-label="Rain radar playback">
@@ -176,6 +176,13 @@ if (app) {
   });
   map.addControl(new maplibregl.NavigationControl(), "bottom-right");
   map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-left");
+  const geolocate = new maplibregl.GeolocateControl({
+    positionOptions: { enableHighAccuracy: false },
+    trackUserLocation: false,
+    showUserLocation: true,
+    showAccuracyCircle: true,
+  });
+  map.addControl(geolocate, "top-left");
   const radar = initRadar(map);
   const route = initRoute(map);
 
@@ -193,6 +200,7 @@ if (app) {
   const navigateButton = document.querySelector<HTMLButtonElement>(".navigate-button");
   const cancelButton = document.querySelector<HTMLButtonElement>(".cancel-button");
   const recenterBtn = document.querySelector<HTMLButtonElement>(".recenter-btn");
+  const recenterHint = document.querySelector<HTMLParagraphElement>(".recenter-hint");
 
   const showPlannerSheet = () => {
     if (plannerSheet) plannerSheet.hidden = false;
@@ -299,15 +307,25 @@ if (app) {
     showPlannerSheet();
   });
 
+  let recenterHintTimer: ReturnType<typeof setTimeout> | undefined;
+  const showRecenterHint = (text: string) => {
+    if (!recenterHint) return;
+    recenterHint.textContent = text;
+    recenterHint.hidden = false;
+    clearTimeout(recenterHintTimer);
+    recenterHintTimer = setTimeout(() => {
+      recenterHint.hidden = true;
+    }, 4000);
+  };
+
+  geolocate.on("error", (event) => {
+    showRecenterHint(
+      event.code === 1 ? "Location access is off - allow it in your browser settings" : "Couldn't get your location",
+    );
+  });
+
   recenterBtn?.addEventListener("click", () => {
-    void (async () => {
-      try {
-        const point = await getCurrentLocation();
-        map.flyTo({ center: [point.lon, point.lat], zoom: Math.max(map.getZoom(), 15) });
-      } catch {
-        // Silent failure is acceptable for a convenience recenter action.
-      }
-    })();
+    geolocate.trigger();
   });
 
   const toggle = document.querySelector<HTMLButtonElement>(".theme-toggle");
