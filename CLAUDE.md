@@ -11,9 +11,10 @@ DryRoute is organized as independent top-level services:
 - `geo_encoding/` — Python FastAPI gateway (`geo_encoding_gateway`) in front of OneMap: owns OneMap token auth/refresh and rate limiting
 - `tiles/` — PMTiles serving and Singapore/West Malaysia extract scripts
 - `valhalla/` — independent routing-service boundary
+- `lambda-radar-ingest/` — containerized AWS Lambda that archives NEA rain radar frames to S3
 - `infra/` — cross-service orchestration only
 
-There is no root pnpm workspace or Turbo configuration. Run tools from the relevant service directory.
+Services communicate only through network APIs and never import each other's source. `lambda-radar-ingest/src/radar_ingest/nea_client.py` is a deliberate self-contained copy of the NEA request/retry pattern in `backend/src/dryroute_api/radar`, not a shared dependency. There is no root pnpm workspace or Turbo configuration; run tools from the relevant service directory.
 
 ## Backend
 
@@ -64,6 +65,19 @@ tiles/scripts/serve-pmtiles.sh
 ```
 
 Both scripts require the `pmtiles` CLI. The generated archive covers Singapore and Peninsular Malaysia and lives at `tiles/data/dryroute.pmtiles`, ignored by Git. The tile endpoint remains `/dryroute/{z}/{x}/{y}.mvt` on port 8081. `tiles/Dockerfile` builds a deployment-agnostic image that bakes this archive in at build time.
+
+## Radar Ingest
+
+```bash
+cd lambda-radar-ingest
+uv sync --frozen
+uv run pytest
+uv run ruff check .
+```
+
+Polls NEA's `data.gov.sg` weather-radar-images API every 2 minutes on an EventBridge schedule (NEA publishes new frames every 5 minutes) and uploads each frame's image and raw JSON to a public-read S3 bucket, partitioned by NEA's own frame timestamp. Idempotent per frame. Deployment is manual (ECR + Lambda console), not the `template.yaml`/SAM files present in the directory; see `lambda-radar-ingest/README.md` before changing IAM, schedule, or deploy steps. `frontend/src/radar.ts` polls the same bucket on a matching cadence; if the Lambda's schedule interval changes, check whether the frontend's poll interval should move with it.
+
+`scripts/fetch_today_radar.py` is an ad-hoc backfill script that reuses `lambda-radar-ingest`'s fetch/upload logic to bulk-load a day's frames; run it with `uv run --project lambda-radar-ingest python scripts/fetch_today_radar.py [YYYY-MM-DD]`.
 
 ## Boundaries
 
