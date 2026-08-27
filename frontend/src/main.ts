@@ -174,7 +174,7 @@ if (app) {
     fitBoundsOptions: { padding: { top: 24, bottom: 24, right: 24, left: 24 } },
     attributionControl: false,
   });
-  map.addControl(new maplibregl.NavigationControl(), "bottom-right");
+  map.addControl(new maplibregl.NavigationControl({ showZoom: false }), "bottom-right");
   map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-left");
   const geolocate = new maplibregl.GeolocateControl({
     positionOptions: { enableHighAccuracy: false },

@@ -956,11 +956,39 @@ body.is-route-edit-mode .maplibregl-ctrl-bottom-left {
 }
 
 .maplibregl-ctrl-bottom-right .maplibregl-ctrl-group {
-  /* Clears the tallest possible bottom panel - the 37.5vh search modal. Right
-     margin is offset by 7.5px so this 29px-wide control shares the same
-     horizontal center as the 44px .map-controls buttons above it (both are
-     nominally right: 1rem, but their differing widths would otherwise put
-     the visual centers out of line). */
-  margin: 0 calc(env(safe-area-inset-right, 0px) + 1rem + 7.5px) calc(env(safe-area-inset-bottom, 0px) + 37.5vh + 6.75rem) 0;
+  /* Clears the tallest possible bottom panel - the 37.5vh search modal. */
+  margin: 0 calc(env(safe-area-inset-right, 0px) + 1rem) calc(env(safe-area-inset-bottom, 0px) + 37.5vh + 6.75rem) 0;
   margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 37.5dvh + 6.75rem);
+  background: var(--surface-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 50%;
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+.maplibregl-ctrl-bottom-right .maplibregl-ctrl-group:not(:empty) {
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+.maplibregl-ctrl-bottom-right .maplibregl-ctrl-group button.maplibregl-ctrl-compass {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+
+.maplibregl-ctrl-compass .maplibregl-ctrl-icon {
+  background-image: none;
+  background-color: var(--mist);
+  -webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z'/%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z'/%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3C/svg%3E");
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: 18px 18px;
+  mask-size: 18px 18px;
+}
+
+.maplibregl-ctrl-compass:hover .maplibregl-ctrl-icon {
+  background-color: var(--dry);
 }
