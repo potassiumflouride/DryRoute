@@ -7,7 +7,6 @@ import { MapAttributionControl } from "./attribution";
 import { initSheetDrag } from "./sheetDrag";
 import { initRadar } from "./radar";
 import { initRoute } from "./route";
-import { initDevFakeRain } from "./devFakeRain";
 import { applyTheme, getInitialTheme, type Theme } from "./theme";
 import { getCurrentLocation } from "./geolocation";
 import "./style.css";
@@ -190,7 +189,6 @@ if (app) {
   });
   map.addControl(geolocate, "top-left");
   initRadar(map);
-  initDevFakeRain(map);
   const route = initRoute(map);
 
   let originSet = false;

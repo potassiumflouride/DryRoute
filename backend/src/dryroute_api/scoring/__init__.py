@@ -21,18 +21,6 @@ _METERS_PER_DEGREE = 111_320  # good enough approximation this close to the equa
 MAX_TOTAL_PERIMETER_METERS = 80_000
 MAX_SIMPLIFY_ATTEMPTS = 6
 
-# Dev-only fixture: a box over central Singapore (roughly Orchard/CBD), wide
-# enough that most cross-island routes pass through it. Used when
-# settings.dev_fake_rain_enabled is set, to test rain-avoidance/rain-crossing
-# behavior without live weather.
-_DEV_FAKE_RAIN_POLYGON: list[tuple[float, float]] = [
-    (103.80, 1.28),
-    (103.86, 1.28),
-    (103.86, 1.32),
-    (103.80, 1.32),
-    (103.80, 1.28),
-]
-
 
 def _pixel_to_lonlat(row: float, col: float, width: int, height: int, boundary_box: BoundaryBox) -> tuple[float, float]:
     upper_left = boundary_box.upper_left
@@ -117,8 +105,6 @@ async def current_rain_polygons(store: RadarStore | None) -> list[list[tuple[flo
     """Rain coverage polygons (lon/lat rings) derived from the latest NEA radar frame."""
     if not settings.rain_avoidance_enabled:
         return []
-    if settings.dev_fake_rain_enabled:
-        return [_DEV_FAKE_RAIN_POLYGON]
     if store is None:
         return []
 

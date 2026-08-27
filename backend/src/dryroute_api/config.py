@@ -11,9 +11,6 @@ class Settings(BaseSettings):
     valhalla_url: str = "https://valhalla1.openstreetmap.de"
     rain_avoidance_enabled: bool = True
     rain_alpha_threshold: int = 40
-    # Dev-only: skip the live NEA radar and report a fixed rain polygon instead, so
-    # rain-avoidance/rain-intersection behavior can be tested without live weather.
-    dev_fake_rain_enabled: bool = False
 
 
 settings = Settings()
