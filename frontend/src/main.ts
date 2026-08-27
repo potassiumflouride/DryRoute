@@ -52,9 +52,18 @@ if (app) {
       <button class="route-toast__cancel" type="button" aria-label="Dismiss">Dismiss</button>
     </div>
     <div class="map-controls">
-      <button class="edit-start-btn" type="button" aria-label="Edit route" disabled hidden>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
-      </button>
+      <div class="edit-hint-group">
+        <button class="edit-start-btn" type="button" aria-label="Edit route" disabled hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+        </button>
+        <p class="edit-rain-hint" hidden aria-live="polite">
+          <span class="edit-rain-hint__dot"></span>
+          <span class="edit-rain-hint__text">Route crosses rain - tap edit to reroute</span>
+          <button class="edit-rain-hint__dismiss" type="button" aria-label="Dismiss">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </p>
+      </div>
       <div class="edit-confirm-group" hidden>
         <button class="edit-save-btn" type="button" aria-label="Save changes">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>

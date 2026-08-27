@@ -51,6 +51,8 @@ export function initRoute(map: maplibregl.Map): RouteController {
   const exportBtn = document.querySelector<HTMLButtonElement>(".route-sheet__export-btn");
   const backBtn = document.querySelector<HTMLButtonElement>(".route-sheet__back-btn");
   const hintBubble = document.querySelector<HTMLDivElement>(".route-hint-bubble");
+  const editRainHint = document.querySelector<HTMLParagraphElement>(".edit-rain-hint");
+  const editRainHintDismiss = document.querySelector<HTMLButtonElement>(".edit-rain-hint__dismiss");
 
   const noop: RouteController = {
     setOrigin: () => {},
@@ -75,7 +77,9 @@ export function initRoute(map: maplibregl.Map): RouteController {
     !editDiscardBtn ||
     !exportBtn ||
     !backBtn ||
-    !hintBubble
+    !hintBubble ||
+    !editRainHint ||
+    !editRainHintDismiss
   )
     return noop;
 
@@ -92,6 +96,8 @@ export function initRoute(map: maplibregl.Map): RouteController {
   let lastRouteAnchors: LngLat[] | null = null;
   let isEditMode = false;
   let hasEditedRoute = false;
+  let lastRouteHasRain = false;
+  let hasDismissedRainHint = false;
 
   const isTouchDevice = () => window.matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0;
 
@@ -287,6 +293,8 @@ export function initRoute(map: maplibregl.Map): RouteController {
     lastRainFeatureCollection = emptyRainCollection();
     lastRoute = null;
     lastRouteAnchors = null;
+    lastRouteHasRain = false;
+    hasDismissedRainHint = false;
     hasEditedRoute = false;
     hintBubble.hidden = true;
     editStartBtn.disabled = true;
@@ -296,6 +304,7 @@ export function initRoute(map: maplibregl.Map): RouteController {
       isEditMode = false;
       applyEditModeState();
     }
+    updateEditRainHint();
     hideSummary();
   };
 
@@ -333,14 +342,33 @@ export function initRoute(map: maplibregl.Map): RouteController {
     toast.classList.toggle("is-blocked", blocked);
   };
 
-  const showHintBubble = () => {
-    if (hasEditedRoute || waypoints.length > 0) return;
-    hintBubble.hidden = false;
+  // On touch devices dragging only works once edit mode is on, so the hint
+  // must wait for that - on desktop the route can be dragged immediately.
+  const updateHintBubble = () => {
+    if (hasEditedRoute || waypoints.length > 0) {
+      hintBubble.hidden = true;
+      return;
+    }
+    hintBubble.hidden = isTouchDevice() ? !isEditMode : false;
   };
 
   const dismissHintBubble = () => {
     hasEditedRoute = true;
-    hintBubble.hidden = true;
+    updateHintBubble();
+  };
+
+  const updateEditRainHint = () => {
+    editRainHint.hidden =
+      isEditMode ||
+      editStartBtn.hidden ||
+      editStartBtn.disabled ||
+      !lastRouteHasRain ||
+      hasDismissedRainHint;
+  };
+
+  const dismissEditRainHint = () => {
+    hasDismissedRainHint = true;
+    updateEditRainHint();
   };
 
   const onRouteDragMove = (event: maplibregl.MapMouseEvent) => {
@@ -452,14 +480,14 @@ export function initRoute(map: maplibregl.Map): RouteController {
     document.body.classList.toggle("is-route-edit-mode", isEditMode);
 
     if (isEditMode) {
-      hintBubble.hidden = true;
       map.dragPan.disable();
-      showToast("Edit mode on - drag anywhere on the map to reshape the route", false);
     } else {
       if (dragMode) endTouchDrag(null);
       map.dragPan.enable();
       hideToast();
     }
+    updateHintBubble();
+    updateEditRainHint();
   };
 
   const navigate = async (opts: { fit?: boolean } = {}) => {
@@ -488,12 +516,15 @@ export function initRoute(map: maplibregl.Map): RouteController {
       const rainCollection = toRainGeoJson(route);
       lastRoute = route;
       lastRouteAnchors = [origin, ...waypoints, destination];
+      lastRouteHasRain = rainCollection.features.length > 0;
+      hasDismissedRainHint = false;
       if (fit) fitToRoute(feature);
       routeSheetStatus.hidden = true;
       showSummary(route);
-      showHintBubble();
+      updateHintBubble();
 
       drawRoute(feature, rainCollection);
+      updateEditRainHint();
       hideToast();
       drawWaypoints();
     } catch {
@@ -537,6 +568,7 @@ export function initRoute(map: maplibregl.Map): RouteController {
   });
 
   toastDismiss.addEventListener("click", hideToast);
+  editRainHintDismiss.addEventListener("click", dismissEditRainHint);
 
   routeReset.addEventListener("click", () => {
     waypoints = [];

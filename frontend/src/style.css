@@ -143,9 +143,72 @@ body {
   color: var(--dry);
 }
 
-.recenter-group {
+.recenter-group,
+.edit-hint-group {
   position: relative;
   flex-shrink: 0;
+}
+
+.edit-rain-hint {
+  position: absolute;
+  right: calc(100% + 0.6rem);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: max-content;
+  max-width: 12rem;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.65rem;
+  background: var(--slate);
+  color: var(--mist);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+.edit-rain-hint__dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger);
+  animation: radar-pulse 1.6s ease-in-out infinite;
+}
+
+.edit-rain-hint__text {
+  flex: 1;
+}
+
+.edit-rain-hint__dismiss {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: -0.35rem -0.5rem -0.35rem 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--address);
+  cursor: pointer;
+}
+
+.edit-rain-hint__dismiss svg {
+  width: 16px;
+  height: 16px;
+}
+
+.edit-rain-hint__dismiss:hover {
+  color: var(--mist);
+  background: var(--hover);
+}
+
+.edit-rain-hint[hidden] {
+  display: none;
 }
 
 .recenter-hint {
@@ -235,7 +298,6 @@ body.is-route-edit-mode .maplibregl-canvas {
 
 body.is-route-edit-mode .app-header,
 body.is-route-edit-mode .bottom-stack,
-body.is-route-edit-mode .route-hint-bubble,
 body.is-route-edit-mode .maplibregl-ctrl-bottom-right,
 body.is-route-edit-mode .maplibregl-ctrl-bottom-left {
   display: none;
@@ -565,7 +627,8 @@ body.is-route-edit-mode .maplibregl-ctrl-bottom-left {
 
 @media (prefers-reduced-motion: reduce) {
   .radar-scrubber__badge.is-live .radar-scrubber__dot,
-  .route-toast.is-blocked .route-toast__dot {
+  .route-toast.is-blocked .route-toast__dot,
+  .edit-rain-hint__dot {
     animation: none;
   }
 }
@@ -716,7 +779,7 @@ body.is-route-edit-mode .maplibregl-ctrl-bottom-left {
 
 .route-hint-bubble {
   position: absolute;
-  top: calc(env(safe-area-inset-top, 0px) + 6.5rem);
+  top: calc(env(safe-area-inset-top, 0px) + 5.5rem);
   left: 50%;
   transform: translateX(-50%);
   z-index: 2;
