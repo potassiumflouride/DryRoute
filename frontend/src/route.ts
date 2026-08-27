@@ -7,6 +7,8 @@ import { buildExportPoints, buildGoogleMapsUrl } from "./mapExport";
 const ROUTE_SOURCE_ID = "route";
 const ROUTE_CASING_LAYER_ID = "route-layer-casing";
 const ROUTE_LAYER_ID = "route-layer";
+const ROUTE_RAIN_SOURCE_ID = "route-rain";
+const ROUTE_RAIN_LAYER_ID = "route-layer-rain";
 const ROUTE_HITBOX_LAYER_ID = "route-layer-hitbox";
 const WAYPOINT_SOURCE_ID = "route-waypoints";
 const WAYPOINT_LAYER_ID = "route-waypoints-layer";
@@ -18,6 +20,11 @@ interface LngLat {
   lat: number;
   lon: number;
 }
+
+const emptyRainCollection = (): GeoJSON.FeatureCollection<GeoJSON.LineString> => ({
+  type: "FeatureCollection",
+  features: [],
+});
 
 export interface RouteController {
   setOrigin: (result: GeocodeResult) => void;
@@ -80,6 +87,7 @@ export function initRoute(map: maplibregl.Map): RouteController {
   let isDraggingRoute = false;
   let dragMode: { kind: "move"; index: number } | { kind: "insert"; index: number } | null = null;
   let lastRouteFeature: GeoJSON.Feature<GeoJSON.LineString> | null = null;
+  let lastRainFeatureCollection: GeoJSON.FeatureCollection<GeoJSON.LineString> = emptyRainCollection();
   let lastRoute: Route | null = null;
   let lastRouteAnchors: LngLat[] | null = null;
   let isEditMode = false;
@@ -88,6 +96,7 @@ export function initRoute(map: maplibregl.Map): RouteController {
   const isTouchDevice = () => window.matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0;
 
   const routeColor = () => getComputedStyle(document.documentElement).getPropertyValue("--rain").trim();
+  const rainSegmentColor = () => getComputedStyle(document.documentElement).getPropertyValue("--danger").trim();
 
   const fitToRoute = (feature: GeoJSON.Feature<GeoJSON.LineString>) => {
     const [minX, minY, maxX, maxY] = turf.bbox(feature);
@@ -106,6 +115,13 @@ export function initRoute(map: maplibregl.Map): RouteController {
     );
     return { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates } };
   };
+
+  const toRainGeoJson = (route: Route): GeoJSON.FeatureCollection<GeoJSON.LineString> => ({
+    type: "FeatureCollection",
+    features: route.legs
+      .flatMap((leg) => leg.rainSegments ?? [])
+      .map((geometry) => ({ type: "Feature", properties: {}, geometry })),
+  });
 
   const dragPreview = (mode: NonNullable<typeof dragMode>, point: LngLat): GeoJSON.Feature<GeoJSON.LineString> => {
     const ordered = [...waypoints];
@@ -148,20 +164,31 @@ export function initRoute(map: maplibregl.Map): RouteController {
     source?.setData(feature);
   };
 
-  const drawRoute = (feature: GeoJSON.Feature<GeoJSON.LineString>) => {
+  const setRainData = (collection: GeoJSON.FeatureCollection<GeoJSON.LineString>) => {
+    const source = map.getSource(ROUTE_RAIN_SOURCE_ID) as maplibregl.GeoJSONSource | undefined;
+    source?.setData(collection);
+  };
+
+  const drawRoute = (
+    feature: GeoJSON.Feature<GeoJSON.LineString>,
+    rainCollection: GeoJSON.FeatureCollection<GeoJSON.LineString>,
+  ) => {
     lastRouteFeature = feature;
+    lastRainFeatureCollection = rainCollection;
     editStartBtn.disabled = false;
     exportBtn.disabled = false;
     backBtn.disabled = false;
     const source = map.getSource(ROUTE_SOURCE_ID) as maplibregl.GeoJSONSource | undefined;
     if (source) {
       source.setData(feature);
+      setRainData(rainCollection);
       return;
     }
 
     addToMapWhenReady(() => {
       if (map.getSource(ROUTE_SOURCE_ID)) return;
       map.addSource(ROUTE_SOURCE_ID, { type: "geojson", data: feature });
+      map.addSource(ROUTE_RAIN_SOURCE_ID, { type: "geojson", data: rainCollection });
       // White casing beneath the blue route line keeps it visible over the radar overlay.
       map.addLayer({
         id: ROUTE_CASING_LAYER_ID,
@@ -183,6 +210,17 @@ export function initRoute(map: maplibregl.Map): RouteController {
           "line-width": 5,
         },
       });
+      // Red overlay on top of the base route line marks segments crossing rain.
+      map.addLayer({
+        id: ROUTE_RAIN_LAYER_ID,
+        type: "line",
+        source: ROUTE_RAIN_SOURCE_ID,
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: {
+          "line-color": rainSegmentColor(),
+          "line-width": 5,
+        },
+      });
       // A wider, invisible line on top of the visible ones - makes the route
       // much easier to grab and start a drag from than the visible line width.
       map.addLayer({
@@ -196,6 +234,7 @@ export function initRoute(map: maplibregl.Map): RouteController {
       // regardless of add-order/reattach timing.
       map.moveLayer(ROUTE_CASING_LAYER_ID);
       map.moveLayer(ROUTE_LAYER_ID);
+      map.moveLayer(ROUTE_RAIN_LAYER_ID);
       map.moveLayer(ROUTE_HITBOX_LAYER_ID);
     });
   };
@@ -239,10 +278,13 @@ export function initRoute(map: maplibregl.Map): RouteController {
     if (map.getLayer(WAYPOINT_LAYER_ID)) map.removeLayer(WAYPOINT_LAYER_ID);
     if (map.getSource(WAYPOINT_SOURCE_ID)) map.removeSource(WAYPOINT_SOURCE_ID);
     if (map.getLayer(ROUTE_HITBOX_LAYER_ID)) map.removeLayer(ROUTE_HITBOX_LAYER_ID);
+    if (map.getLayer(ROUTE_RAIN_LAYER_ID)) map.removeLayer(ROUTE_RAIN_LAYER_ID);
+    if (map.getSource(ROUTE_RAIN_SOURCE_ID)) map.removeSource(ROUTE_RAIN_SOURCE_ID);
     if (map.getLayer(ROUTE_LAYER_ID)) map.removeLayer(ROUTE_LAYER_ID);
     if (map.getLayer(ROUTE_CASING_LAYER_ID)) map.removeLayer(ROUTE_CASING_LAYER_ID);
     if (map.getSource(ROUTE_SOURCE_ID)) map.removeSource(ROUTE_SOURCE_ID);
     lastRouteFeature = null;
+    lastRainFeatureCollection = emptyRainCollection();
     lastRoute = null;
     lastRouteAnchors = null;
     hasEditedRoute = false;
@@ -304,6 +346,7 @@ export function initRoute(map: maplibregl.Map): RouteController {
   const onRouteDragMove = (event: maplibregl.MapMouseEvent) => {
     if (!dragMode) return;
     setLineData(dragPreview(dragMode, { lat: event.lngLat.lat, lon: event.lngLat.lng }));
+    setRainData(emptyRainCollection());
   };
 
   const onRouteDragEnd = (event: maplibregl.MapMouseEvent) => {
@@ -372,6 +415,7 @@ export function initRoute(map: maplibregl.Map): RouteController {
     }
     event.preventDefault();
     setLineData(dragPreview(dragMode, { lat: event.lngLat.lat, lon: event.lngLat.lng }));
+    setRainData(emptyRainCollection());
   };
 
   const onRouteTouchEnd = (event: maplibregl.MapTouchEvent) => {
@@ -395,7 +439,10 @@ export function initRoute(map: maplibregl.Map): RouteController {
       void navigate({ fit: false });
     } else if (dragMode) {
       dragMode = null;
-      if (lastRouteFeature) setLineData(lastRouteFeature);
+      if (lastRouteFeature) {
+        setLineData(lastRouteFeature);
+        setRainData(lastRainFeatureCollection);
+      }
     }
   };
 
@@ -438,6 +485,7 @@ export function initRoute(map: maplibregl.Map): RouteController {
       if (!response.ok) throw new Error(`Route fetch failed: ${response.status}`);
       const route = (await response.json()) as Route;
       const feature = toGeoJson(route);
+      const rainCollection = toRainGeoJson(route);
       lastRoute = route;
       lastRouteAnchors = [origin, ...waypoints, destination];
       if (fit) fitToRoute(feature);
@@ -445,7 +493,7 @@ export function initRoute(map: maplibregl.Map): RouteController {
       showSummary(route);
       showHintBubble();
 
-      drawRoute(feature);
+      drawRoute(feature, rainCollection);
       hideToast();
       drawWaypoints();
     } catch {
@@ -536,7 +584,7 @@ export function initRoute(map: maplibregl.Map): RouteController {
       hideToast();
     },
     reattach: () => {
-      if (lastRouteFeature) drawRoute(lastRouteFeature);
+      if (lastRouteFeature) drawRoute(lastRouteFeature, lastRainFeatureCollection);
       drawWaypoints();
     },
   };

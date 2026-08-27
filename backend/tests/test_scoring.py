@@ -83,6 +83,30 @@ def test_current_rain_polygons_returns_empty_when_store_is_none() -> None:
     assert asyncio.run(scoring.current_rain_polygons(None)) == []
 
 
+def test_rain_intersections_returns_empty_without_polygons() -> None:
+    coordinates = [(103.0, 1.0), (103.1, 1.0)]
+    assert scoring.rain_intersections(coordinates, []) == []
+
+
+def test_rain_intersections_returns_empty_when_line_misses_polygons() -> None:
+    coordinates = [(103.0, 1.0), (103.1, 1.0)]
+    polygon = [(105.0, 2.0), (105.1, 2.0), (105.1, 2.1), (105.0, 2.1), (105.0, 2.0)]
+    assert scoring.rain_intersections(coordinates, [polygon]) == []
+
+
+def test_rain_intersections_returns_overlapping_segment() -> None:
+    coordinates = [(103.0, 1.0), (103.1, 1.0), (103.2, 1.0)]
+    # A square rain cell straddling the midpoint of the line.
+    polygon = [(103.05, 0.9), (103.15, 0.9), (103.15, 1.1), (103.05, 1.1), (103.05, 0.9)]
+
+    segments = scoring.rain_intersections(coordinates, [polygon])
+
+    assert len(segments) == 1
+    lons = [lon for lon, _ in segments[0]]
+    assert min(lons) == pytest.approx(103.05)
+    assert max(lons) == pytest.approx(103.15)
+
+
 def test_current_rain_polygons_disabled_returns_empty(monkeypatch: pytest.MonkeyPatch) -> None:
     from dryroute_api.config import settings
 

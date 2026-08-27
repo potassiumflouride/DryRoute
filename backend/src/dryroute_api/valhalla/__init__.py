@@ -27,6 +27,7 @@ class RouteLeg(BaseModel):
     geometry: dict
     distanceMeters: float
     durationSeconds: float
+    rainSegments: list[dict] | None = None
 
 
 class Route(BaseModel):

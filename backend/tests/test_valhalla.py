@@ -205,3 +205,58 @@ def test_route_falls_back_when_excluded_polygons_are_infeasible(monkeypatch: pyt
     second_body = json.loads(mock.calls[1].request.content)
     assert "exclude_polygons" in first_body
     assert "exclude_polygons" not in second_body
+
+
+@respx.mock
+def test_route_flags_segments_crossing_rain(monkeypatch: pytest.MonkeyPatch) -> None:
+    import dryroute_api.scoring as scoring_module
+
+    async def fake_rain_polygons(_store: object) -> list[list[tuple[float, float]]]:
+        # Straddles the midpoint of the mocked route leg below.
+        return [[(103.87, 1.3), (103.93, 1.3), (103.93, 1.4), (103.87, 1.4), (103.87, 1.3)]]
+
+    monkeypatch.setattr(scoring_module, "current_rain_polygons", fake_rain_polygons)
+
+    respx.post(VALHALLA_ROUTE_URL).mock(
+        return_value=_valhalla_response(
+            [_leg(1.0, 120.0, [[103.8198, 1.3521], [103.9915, 1.3644]])]
+        )
+    )
+
+    response = client.get(
+        "/route",
+        params={
+            "origin_lat": ORIGIN["lat"],
+            "origin_lon": ORIGIN["lon"],
+            "dest_lat": DEST["lat"],
+            "dest_lon": DEST["lon"],
+        },
+    )
+
+    assert response.status_code == 200
+    leg = response.json()["legs"][0]
+    assert leg["rainSegments"]
+    assert leg["rainSegments"][0]["type"] == "LineString"
+    assert len(leg["rainSegments"][0]["coordinates"]) >= 2
+
+
+@respx.mock
+def test_route_omits_rain_segments_when_no_rain() -> None:
+    respx.post(VALHALLA_ROUTE_URL).mock(
+        return_value=_valhalla_response(
+            [_leg(1.0, 120.0, [[103.8198, 1.3521], [103.9915, 1.3644]])]
+        )
+    )
+
+    response = client.get(
+        "/route",
+        params={
+            "origin_lat": ORIGIN["lat"],
+            "origin_lon": ORIGIN["lon"],
+            "dest_lat": DEST["lat"],
+            "dest_lon": DEST["lon"],
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["legs"][0]["rainSegments"] is None

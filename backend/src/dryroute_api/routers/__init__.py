@@ -39,9 +39,16 @@ async def get_route(
     exclude_polygons = await scoring.current_rain_polygons(store)
 
     try:
-        return await valhalla.route(coordinates, mode, exclude_polygons)
+        route = await valhalla.route(coordinates, mode, exclude_polygons)
     except ValhallaRoutingError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    if exclude_polygons:
+        for leg in route.legs:
+            segments = scoring.rain_intersections(leg.geometry["coordinates"], exclude_polygons)
+            leg.rainSegments = [{"type": "LineString", "coordinates": s} for s in segments] or None
+
+    return route
 
 
 @router.get("/radar/frames")

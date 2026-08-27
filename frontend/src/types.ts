@@ -19,6 +19,7 @@ export interface RouteLeg {
   geometry: { type: "LineString"; coordinates: [number, number][] };
   distanceMeters: number;
   durationSeconds: number;
+  rainSegments?: { type: "LineString"; coordinates: [number, number][] }[];
 }
 
 export interface Route {

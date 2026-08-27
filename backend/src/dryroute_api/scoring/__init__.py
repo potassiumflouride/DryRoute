@@ -2,7 +2,8 @@ from io import BytesIO
 
 import numpy as np
 from PIL import Image
-from shapely.geometry import Polygon
+from shapely.geometry import LineString, Polygon
+from shapely.ops import unary_union
 from skimage import measure
 
 from dryroute_api.config import settings
@@ -78,6 +79,26 @@ def _extract_polygons(image_bytes: bytes, boundary_box: BoundaryBox) -> list[lis
         polygons.append(list(simplified.exterior.coords))
 
     return polygons
+
+
+def rain_intersections(
+    coordinates: list[tuple[float, float]], polygons: list[list[tuple[float, float]]]
+) -> list[list[tuple[float, float]]]:
+    """Portions of a route line (lon/lat coords) that fall inside the given rain polygons."""
+    if not polygons or len(coordinates) < 2:
+        return []
+
+    line = LineString(coordinates)
+    rain_area = unary_union([Polygon(ring) for ring in polygons])
+    overlap = line.intersection(rain_area)
+
+    if overlap.is_empty:
+        return []
+    if isinstance(overlap, LineString):
+        return [list(overlap.coords)]
+    if hasattr(overlap, "geoms"):
+        return [list(geom.coords) for geom in overlap.geoms if isinstance(geom, LineString)]
+    return []
 
 
 async def current_rain_polygons(store: RadarStore | None) -> list[list[tuple[float, float]]]:
