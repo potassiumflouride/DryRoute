@@ -1,6 +1,6 @@
 # DryRoute Tile Service
 
-Serves a Protomaps archive covering Singapore and Peninsular Malaysia from `data/dryroute.pmtiles` on port 8081.
+Serves a Protomaps archive covering Singapore, the Riau Islands, and Peninsular Malaysia from `data/dryroute.pmtiles` on port 8081.
 
 The PMTiles archive is generated runtime data and is not committed to Git.
 
