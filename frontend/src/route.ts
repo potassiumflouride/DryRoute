@@ -79,7 +79,6 @@ export function initRoute(map: maplibregl.Map): RouteController {
   let waypointsBeforeEdit: LngLat[] = [];
   let isDraggingRoute = false;
   let dragMode: { kind: "move"; index: number } | { kind: "insert"; index: number } | null = null;
-  let lastRouteAtRisk = false;
   let lastRouteFeature: GeoJSON.Feature<GeoJSON.LineString> | null = null;
   let lastRoute: Route | null = null;
   let lastRouteAnchors: LngLat[] | null = null;
@@ -149,8 +148,7 @@ export function initRoute(map: maplibregl.Map): RouteController {
     source?.setData(feature);
   };
 
-  const drawRoute = (feature: GeoJSON.Feature<GeoJSON.LineString>, atRisk: boolean) => {
-    lastRouteAtRisk = atRisk;
+  const drawRoute = (feature: GeoJSON.Feature<GeoJSON.LineString>) => {
     lastRouteFeature = feature;
     editStartBtn.disabled = false;
     exportBtn.disabled = false;
@@ -158,8 +156,6 @@ export function initRoute(map: maplibregl.Map): RouteController {
     const source = map.getSource(ROUTE_SOURCE_ID) as maplibregl.GeoJSONSource | undefined;
     if (source) {
       source.setData(feature);
-      map.setPaintProperty(ROUTE_CASING_LAYER_ID, "line-dasharray", atRisk ? [2, 1.5] : [1]);
-      map.setPaintProperty(ROUTE_LAYER_ID, "line-dasharray", atRisk ? [2, 1.5] : [1]);
       return;
     }
 
@@ -175,7 +171,6 @@ export function initRoute(map: maplibregl.Map): RouteController {
         paint: {
           "line-color": "#ffffff",
           "line-width": 9,
-          "line-dasharray": atRisk ? [2, 1.5] : [1],
         },
       });
       map.addLayer({
@@ -186,7 +181,6 @@ export function initRoute(map: maplibregl.Map): RouteController {
         paint: {
           "line-color": routeColor(),
           "line-width": 5,
-          "line-dasharray": atRisk ? [2, 1.5] : [1],
         },
       });
       // A wider, invisible line on top of the visible ones - makes the route
@@ -248,7 +242,6 @@ export function initRoute(map: maplibregl.Map): RouteController {
     if (map.getLayer(ROUTE_LAYER_ID)) map.removeLayer(ROUTE_LAYER_ID);
     if (map.getLayer(ROUTE_CASING_LAYER_ID)) map.removeLayer(ROUTE_CASING_LAYER_ID);
     if (map.getSource(ROUTE_SOURCE_ID)) map.removeSource(ROUTE_SOURCE_ID);
-    lastRouteAtRisk = false;
     lastRouteFeature = null;
     lastRoute = null;
     lastRouteAnchors = null;
@@ -414,7 +407,7 @@ export function initRoute(map: maplibregl.Map): RouteController {
     if (isEditMode) {
       hintBubble.hidden = true;
       map.dragPan.disable();
-      if (!lastRouteAtRisk) showToast("Edit mode on - drag anywhere on the map to reshape the route", false);
+      showToast("Edit mode on - drag anywhere on the map to reshape the route", false);
     } else {
       if (dragMode) endTouchDrag(null);
       map.dragPan.enable();
@@ -452,7 +445,7 @@ export function initRoute(map: maplibregl.Map): RouteController {
       showSummary(route);
       showHintBubble();
 
-      drawRoute(feature, false);
+      drawRoute(feature);
       hideToast();
       drawWaypoints();
     } catch {
@@ -543,7 +536,7 @@ export function initRoute(map: maplibregl.Map): RouteController {
       hideToast();
     },
     reattach: () => {
-      if (lastRouteFeature) drawRoute(lastRouteFeature, lastRouteAtRisk);
+      if (lastRouteFeature) drawRoute(lastRouteFeature);
       drawWaypoints();
     },
   };
