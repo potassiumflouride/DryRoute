@@ -79,7 +79,7 @@ function msUntilNextTrigger(now: Date): number {
 }
 
 export function initRadar(map: maplibregl.Map): RadarController {
-  const root = document.querySelector<HTMLDivElement>(".radar-scrubber");
+  const root = document.querySelector<HTMLDivElement>(".radar-player");
   const playButton = document.querySelector<HTMLButtonElement>(".radar-scrubber__play");
   const playhead = document.querySelector<HTMLDivElement>(".radar-scrubber__playhead");
   const range = document.querySelector<HTMLInputElement>(".radar-scrubber__range");
@@ -87,9 +87,22 @@ export function initRadar(map: maplibregl.Map): RadarController {
   const badgeLabel = document.querySelector<HTMLSpanElement>(".radar-scrubber__badge-label");
   const timeLabel = document.querySelector<HTMLSpanElement>(".radar-scrubber__time");
   const offsetLabel = document.querySelector<HTMLSpanElement>(".radar-scrubber__offset");
+  const statusText = document.querySelector<HTMLParagraphElement>(".radar-player__status");
+  const toggleBtn = document.querySelector<HTMLButtonElement>(".radar-toggle-btn");
 
   const noop: RadarController = { reattach: () => {} };
-  if (!root || !playButton || !playhead || !range || !badge || !badgeLabel || !timeLabel || !offsetLabel) {
+  if (
+    !root ||
+    !playButton ||
+    !playhead ||
+    !range ||
+    !badge ||
+    !badgeLabel ||
+    !timeLabel ||
+    !offsetLabel ||
+    !statusText ||
+    !toggleBtn
+  ) {
     return noop;
   }
 
@@ -97,6 +110,7 @@ export function initRadar(map: maplibregl.Map): RadarController {
   let currentIndex = 0;
   let isLive = true;
   let playing = false;
+  let enabled = true;
   let playTimer: ReturnType<typeof setInterval> | undefined;
 
   const formatTime = (iso: string) =>
@@ -126,6 +140,7 @@ export function initRadar(map: maplibregl.Map): RadarController {
       if (map.getSource(SOURCE_ID)) return;
       map.addSource(SOURCE_ID, { type: "image", url: sourceUrl(frame), coordinates });
       map.addLayer({ id: LAYER_ID, type: "raster", source: SOURCE_ID, paint: { "raster-opacity": 0.6 } });
+      map.setLayoutProperty(LAYER_ID, "visibility", enabled ? "visible" : "none");
     });
   };
 
@@ -177,13 +192,21 @@ export function initRadar(map: maplibregl.Map): RadarController {
       (_, i) => new Date(floor.getTime() - (FRAME_COUNT - 1 - i) * INTERVAL_MINUTES * 60000),
     );
     const fetched = await Promise.all(targets.map((target) => fetchFrameOnce(target)));
-    setFrames(fetched.filter((frame): frame is RadarFrame => frame !== null));
+    const valid = fetched.filter((frame): frame is RadarFrame => frame !== null);
+    if (valid.length === 0) {
+      statusText.textContent = "Radar data temporarily unavailable.";
+      statusText.hidden = false;
+      return;
+    }
+    statusText.hidden = true;
+    setFrames(valid);
   };
 
   const pollLatest = async () => {
     const target = floorToIntervalUtc(new Date());
     const frame = await fetchFrame(target);
     if (frame) {
+      statusText.hidden = true;
       const withoutDuplicate = frames.filter((f) => f.timestamp !== frame.timestamp);
       setFrames([...withoutDuplicate, frame].slice(-FRAME_COUNT));
     }
@@ -232,12 +255,30 @@ export function initRadar(map: maplibregl.Map): RadarController {
     render();
   });
 
+  const setEnabled = (next: boolean) => {
+    enabled = next;
+    toggleBtn.classList.toggle("is-active", enabled);
+    toggleBtn.setAttribute("aria-pressed", String(enabled));
+    root.hidden = !enabled;
+    if (!enabled) {
+      stopPlaying();
+    } else {
+      render();
+    }
+    if (map.getLayer(LAYER_ID)) {
+      map.setLayoutProperty(LAYER_ID, "visibility", enabled ? "visible" : "none");
+    }
+  };
+
+  toggleBtn.addEventListener("click", () => setEnabled(!enabled));
+
   void backfill();
   scheduleNextPoll();
 
   return {
     reattach: () => {
       if (frames.length > 0) applySource();
+      root.hidden = !enabled;
     },
   };
 }

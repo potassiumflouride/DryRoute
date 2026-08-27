@@ -6,6 +6,7 @@ import { addToMapWhenReady } from "./mapReady";
 import { buildExportPoints, buildGoogleMapsUrl, buildAppleMapsUrl } from "./mapExport";
 
 const ROUTE_SOURCE_ID = "route";
+const ROUTE_CASING_LAYER_ID = "route-layer-casing";
 const ROUTE_LAYER_ID = "route-layer";
 const ROUTE_HITBOX_LAYER_ID = "route-layer-hitbox";
 const WAYPOINT_SOURCE_ID = "route-waypoints";
@@ -13,8 +14,6 @@ const WAYPOINT_LAYER_ID = "route-waypoints-layer";
 const WAYPOINT_HIT_RADIUS_PX = 12;
 const TOUCH_WAYPOINT_HIT_RADIUS_PX = 28;
 const MAX_WAYPOINTS = 8;
-const SIDEBAR_BREAKPOINT = "(min-width: 768px)";
-const SIDEBAR_WIDTH_PX = 352; // keep in sync with --sidebar-width in style.css (22rem @ 16px base)
 
 interface LngLat {
   lat: number;
@@ -33,16 +32,20 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
   const toast = document.querySelector<HTMLDivElement>(".route-toast");
   const toastMessage = document.querySelector<HTMLSpanElement>(".route-toast__message");
   const toastDismiss = document.querySelector<HTMLButtonElement>(".route-toast__cancel");
-  const routeSummary = document.querySelector<HTMLDivElement>(".route-summary");
+  const routeSheet = document.querySelector<HTMLDivElement>(".route-sheet");
+  const routeSheetDestination = document.querySelector<HTMLElement>(".route-sheet__destination");
+  const routeSheetStatus = document.querySelector<HTMLParagraphElement>(".route-sheet__status");
+  const routeSummary = document.querySelector<HTMLSpanElement>(".route-summary");
   const routeReset = document.querySelector<HTMLButtonElement>(".route-reset");
   const editStartBtn = document.querySelector<HTMLButtonElement>(".edit-start-btn");
   const editConfirmGroup = document.querySelector<HTMLDivElement>(".edit-confirm-group");
   const editSaveBtn = document.querySelector<HTMLButtonElement>(".edit-save-btn");
   const editDiscardBtn = document.querySelector<HTMLButtonElement>(".edit-discard-btn");
-  const shareBtn = document.querySelector<HTMLButtonElement>(".share-btn");
-  const shareMenu = document.querySelector<HTMLDivElement>(".share-menu");
-  const shareGoogleOption = document.querySelector<HTMLButtonElement>(".share-menu__option--google");
-  const shareAppleOption = document.querySelector<HTMLButtonElement>(".share-menu__option--apple");
+  const exportBtn = document.querySelector<HTMLButtonElement>(".route-sheet__export-btn");
+  const moreBtn = document.querySelector<HTMLButtonElement>(".route-sheet__more-btn");
+  const moreMenu = document.querySelector<HTMLDivElement>(".route-sheet__more-menu");
+  const appleOption = document.querySelector<HTMLButtonElement>(".share-menu__option--apple");
+  const hintBubble = document.querySelector<HTMLDivElement>(".route-hint-bubble");
 
   const noop: RouteController = {
     setOrigin: () => {},
@@ -55,21 +58,26 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     !toast ||
     !toastMessage ||
     !toastDismiss ||
+    !routeSheet ||
+    !routeSheetDestination ||
+    !routeSheetStatus ||
     !routeSummary ||
     !routeReset ||
     !editStartBtn ||
     !editConfirmGroup ||
     !editSaveBtn ||
     !editDiscardBtn ||
-    !shareBtn ||
-    !shareMenu ||
-    !shareGoogleOption ||
-    !shareAppleOption
+    !exportBtn ||
+    !moreBtn ||
+    !moreMenu ||
+    !appleOption ||
+    !hintBubble
   )
     return noop;
 
   let origin: LngLat | null = null;
   let destination: LngLat | null = null;
+  let destinationLabel = "";
   let waypoints: LngLat[] = [];
   let waypointsBeforeEdit: LngLat[] = [];
   let isDraggingRoute = false;
@@ -79,6 +87,7 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
   let lastRoute: Route | null = null;
   let lastRouteAnchors: LngLat[] | null = null;
   let isEditMode = false;
+  let hasEditedRoute = false;
 
   const isTouchDevice = () => window.matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0;
 
@@ -88,17 +97,14 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
 
   const routeColor = () => getComputedStyle(document.documentElement).getPropertyValue("--rain").trim();
 
-  const isSidebarLayout = () => window.matchMedia(SIDEBAR_BREAKPOINT).matches;
-
   const fitToRoute = (feature: GeoJSON.Feature<GeoJSON.LineString>) => {
     const [minX, minY, maxX, maxY] = turf.bbox(feature);
-    const left = 40 + (isSidebarLayout() ? SIDEBAR_WIDTH_PX : 0);
     map.fitBounds(
       [
         [minX, minY],
         [maxX, maxY],
       ],
-      { padding: { top: 160, bottom: 220, left, right: 40 }, duration: 800 },
+      { padding: { top: 160, bottom: 220, left: 40, right: 40 }, duration: 800 },
     );
   };
 
@@ -154,10 +160,12 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     lastRouteAtRisk = atRisk;
     lastRouteFeature = feature;
     editStartBtn.disabled = false;
-    shareBtn.disabled = false;
+    exportBtn.disabled = false;
+    moreBtn.disabled = false;
     const source = map.getSource(ROUTE_SOURCE_ID) as maplibregl.GeoJSONSource | undefined;
     if (source) {
       source.setData(feature);
+      map.setPaintProperty(ROUTE_CASING_LAYER_ID, "line-dasharray", atRisk ? [2, 1.5] : [1]);
       map.setPaintProperty(ROUTE_LAYER_ID, "line-dasharray", atRisk ? [2, 1.5] : [1]);
       return;
     }
@@ -165,6 +173,18 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     addToMapWhenReady(() => {
       if (map.getSource(ROUTE_SOURCE_ID)) return;
       map.addSource(ROUTE_SOURCE_ID, { type: "geojson", data: feature });
+      // White casing beneath the blue route line keeps it visible over the radar overlay.
+      map.addLayer({
+        id: ROUTE_CASING_LAYER_ID,
+        type: "line",
+        source: ROUTE_SOURCE_ID,
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: {
+          "line-color": "#ffffff",
+          "line-width": 9,
+          "line-dasharray": atRisk ? [2, 1.5] : [1],
+        },
+      });
       map.addLayer({
         id: ROUTE_LAYER_ID,
         type: "line",
@@ -172,12 +192,12 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
         layout: { "line-cap": "round", "line-join": "round" },
         paint: {
           "line-color": routeColor(),
-          "line-width": 4,
+          "line-width": 5,
           "line-dasharray": atRisk ? [2, 1.5] : [1],
         },
       });
-      // A wider, invisible line on top of the visible one - makes the route
-      // much easier to grab and start a drag from than the 4px visible line.
+      // A wider, invisible line on top of the visible ones - makes the route
+      // much easier to grab and start a drag from than the visible line width.
       map.addLayer({
         id: ROUTE_HITBOX_LAYER_ID,
         type: "line",
@@ -185,6 +205,11 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
         layout: { "line-cap": "round", "line-join": "round" },
         paint: { "line-color": "#000", "line-width": 24, "line-opacity": 0 },
       });
+      // Always bring the route above whatever else was added to the map (e.g. radar),
+      // regardless of add-order/reattach timing.
+      map.moveLayer(ROUTE_CASING_LAYER_ID);
+      map.moveLayer(ROUTE_LAYER_ID);
+      map.moveLayer(ROUTE_HITBOX_LAYER_ID);
     });
   };
 
@@ -219,6 +244,7 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
           "circle-stroke-color": "#fff",
         },
       });
+      map.moveLayer(WAYPOINT_LAYER_ID);
     });
   };
 
@@ -227,14 +253,18 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     if (map.getSource(WAYPOINT_SOURCE_ID)) map.removeSource(WAYPOINT_SOURCE_ID);
     if (map.getLayer(ROUTE_HITBOX_LAYER_ID)) map.removeLayer(ROUTE_HITBOX_LAYER_ID);
     if (map.getLayer(ROUTE_LAYER_ID)) map.removeLayer(ROUTE_LAYER_ID);
+    if (map.getLayer(ROUTE_CASING_LAYER_ID)) map.removeLayer(ROUTE_CASING_LAYER_ID);
     if (map.getSource(ROUTE_SOURCE_ID)) map.removeSource(ROUTE_SOURCE_ID);
     lastRouteAtRisk = false;
     lastRouteFeature = null;
     lastRoute = null;
     lastRouteAnchors = null;
+    hasEditedRoute = false;
+    hintBubble.hidden = true;
     editStartBtn.disabled = true;
-    shareBtn.disabled = true;
-    closeShareMenu();
+    exportBtn.disabled = true;
+    moreBtn.disabled = true;
+    closeMoreMenu();
     if (isEditMode) {
       isEditMode = false;
       applyEditModeState();
@@ -252,13 +282,15 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
 
   const showSummary = (route: Route) => {
     const km = (route.distanceMeters / 1000).toFixed(1);
+    routeSheetDestination.textContent = destinationLabel;
     routeSummary.textContent = `${km} km · ${formatDuration(route.durationSeconds)}`;
-    routeSummary.hidden = false;
+    routeSheet.hidden = false;
     routeReset.hidden = waypoints.length === 0;
   };
 
   const hideSummary = () => {
-    routeSummary.hidden = true;
+    routeSheet.hidden = true;
+    routeSheetDestination.textContent = "";
     routeSummary.textContent = "";
     routeReset.hidden = true;
   };
@@ -268,32 +300,42 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     toast.classList.remove("is-blocked");
   };
 
-  const closeShareMenu = () => {
-    shareMenu.hidden = true;
-    document.removeEventListener("click", onShareMenuOutsideClick, true);
-    document.removeEventListener("keydown", onShareMenuKeydown);
+  const closeMoreMenu = () => {
+    moreMenu.hidden = true;
+    document.removeEventListener("click", onMoreMenuOutsideClick, true);
+    document.removeEventListener("keydown", onMoreMenuKeydown);
   };
 
-  const openShareMenu = () => {
-    shareMenu.hidden = false;
-    document.addEventListener("click", onShareMenuOutsideClick, true);
-    document.addEventListener("keydown", onShareMenuKeydown);
+  const openMoreMenu = () => {
+    moreMenu.hidden = false;
+    document.addEventListener("click", onMoreMenuOutsideClick, true);
+    document.addEventListener("keydown", onMoreMenuKeydown);
   };
 
-  const onShareMenuOutsideClick = (event: MouseEvent) => {
+  const onMoreMenuOutsideClick = (event: MouseEvent) => {
     const target = event.target as Node;
-    if (shareMenu.contains(target) || shareBtn.contains(target)) return;
-    closeShareMenu();
+    if (moreMenu.contains(target) || moreBtn.contains(target)) return;
+    closeMoreMenu();
   };
 
-  const onShareMenuKeydown = (event: KeyboardEvent) => {
-    if (event.key === "Escape") closeShareMenu();
+  const onMoreMenuKeydown = (event: KeyboardEvent) => {
+    if (event.key === "Escape") closeMoreMenu();
   };
 
   const showToast = (message: string, blocked: boolean) => {
     toastMessage.textContent = message;
     toast.hidden = false;
     toast.classList.toggle("is-blocked", blocked);
+  };
+
+  const showHintBubble = () => {
+    if (hasEditedRoute || waypoints.length > 0) return;
+    hintBubble.hidden = false;
+  };
+
+  const dismissHintBubble = () => {
+    hasEditedRoute = true;
+    hintBubble.hidden = true;
   };
 
   const intersectsRainZone = (feature: GeoJSON.Feature<GeoJSON.LineString>): boolean => {
@@ -322,6 +364,7 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
 
   const onRouteMouseDown = (event: maplibregl.MapMouseEvent) => {
     event.preventDefault();
+    dismissHintBubble();
     isDraggingRoute = true;
     map.dragPan.disable();
     map.getCanvas().style.cursor = "grabbing";
@@ -344,6 +387,7 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     if (!isEditMode) return;
     if (event.originalEvent.touches.length > 1) return;
     event.preventDefault();
+    dismissHintBubble();
     isDraggingRoute = true;
 
     const nearbyIndex = findNearbyWaypointIndex(event.point, TOUCH_WAYPOINT_HIT_RADIUS_PX);
@@ -402,6 +446,7 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     document.body.classList.toggle("is-route-edit-mode", isEditMode);
 
     if (isEditMode) {
+      hintBubble.hidden = true;
       map.dragPan.disable();
       if (!lastRouteAtRisk) showToast("Edit mode on - drag anywhere on the map to reshape the route", false);
     } else {
@@ -425,6 +470,10 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
       params.set("waypoints", waypoints.map((w) => `${w.lat},${w.lon}`).join(";"));
     }
 
+    routeSheetStatus.textContent = "Finding route…";
+    routeSheetStatus.hidden = false;
+    routeSheet.hidden = false;
+
     try {
       const response = await fetch(`/api/route?${params.toString()}`);
       if (!response.ok) throw new Error(`Route fetch failed: ${response.status}`);
@@ -433,7 +482,9 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
       lastRoute = route;
       lastRouteAnchors = [origin, ...waypoints, destination];
       if (fit) fitToRoute(feature);
+      routeSheetStatus.hidden = true;
       showSummary(route);
+      showHintBubble();
 
       if (isDevMode() && intersectsRainZone(feature)) {
         drawRoute(feature, true);
@@ -444,6 +495,7 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
       }
       drawWaypoints();
     } catch {
+      routeSheetStatus.hidden = true;
       hideSummary();
       showToast("Couldn't fetch a route - try again", false);
     }
@@ -452,8 +504,9 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
   editStartBtn.hidden = !isTouchDevice();
   editStartBtn.disabled = true;
   editConfirmGroup.hidden = true;
-  shareBtn.disabled = true;
-  shareMenu.hidden = true;
+  exportBtn.disabled = true;
+  moreBtn.disabled = true;
+  moreMenu.hidden = true;
 
   editStartBtn.addEventListener("click", () => {
     if (editStartBtn.disabled) return;
@@ -476,24 +529,23 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     void navigate({ fit: false });
   });
 
-  shareBtn.addEventListener("click", () => {
-    if (shareBtn.disabled) return;
-    if (shareMenu.hidden) openShareMenu();
-    else closeShareMenu();
-  });
-
-  shareGoogleOption.addEventListener("click", () => {
+  exportBtn.addEventListener("click", () => {
     if (!lastRoute || !lastRouteAnchors) return;
     const points = buildExportPoints(lastRoute, lastRouteAnchors);
     window.open(buildGoogleMapsUrl(points), "_blank", "noopener,noreferrer");
-    closeShareMenu();
   });
 
-  shareAppleOption.addEventListener("click", () => {
+  moreBtn.addEventListener("click", () => {
+    if (moreBtn.disabled) return;
+    if (moreMenu.hidden) openMoreMenu();
+    else closeMoreMenu();
+  });
+
+  appleOption.addEventListener("click", () => {
     if (!lastRoute || !lastRouteAnchors) return;
     const points = buildExportPoints(lastRoute, lastRouteAnchors);
     window.open(buildAppleMapsUrl(points), "_blank", "noopener,noreferrer");
-    closeShareMenu();
+    closeMoreMenu();
   });
 
   toastDismiss.addEventListener("click", hideToast);
@@ -531,6 +583,7 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     },
     setDestination: (result: GeocodeResult) => {
       destination = { lat: result.lat, lon: result.lon };
+      destinationLabel = result.name;
       waypoints = [];
       clearRoute();
       hideToast();
