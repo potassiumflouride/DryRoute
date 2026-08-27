@@ -346,17 +346,6 @@ body.is-route-edit-mode .maplibregl-ctrl-bottom-left {
   margin-top: 0.1rem;
 }
 
-.location-sheet__origin .search__field {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  border-radius: 999px;
-  background: var(--surface-glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  padding-bottom: 0.3rem;
-}
-
 .search-hint {
   margin: 0;
   font-family: var(--font-body);
