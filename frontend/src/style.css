@@ -280,7 +280,7 @@ body.is-route-edit-mode .maplibregl-ctrl-bottom-right {
   top: 50%;
   transform: translateY(-50%);
   display: flex;
-  color: var(--address);
+  color: var(--mist);
   pointer-events: none;
 }
 
@@ -322,6 +322,17 @@ body.is-route-edit-mode .maplibregl-ctrl-bottom-right {
 
 .location-sheet__origin {
   margin-top: 0.1rem;
+}
+
+.location-sheet__origin .search__field {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-radius: 999px;
+  background: var(--surface-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding-bottom: 0.3rem;
 }
 
 .search-hint {
@@ -585,8 +596,8 @@ body.is-route-edit-mode .maplibregl-ctrl-bottom-right {
 
 .location-sheet {
   width: 100%;
-  height: 37.5vh;
-  height: 37.5dvh;
+  height: var(--sheet-height, 37.5vh);
+  height: var(--sheet-height, 37.5dvh);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -598,6 +609,11 @@ body.is-route-edit-mode .maplibregl-ctrl-bottom-right {
   box-shadow: 0 -4px 24px var(--shadow);
   padding: 0.6rem 1.1rem calc(env(safe-area-inset-bottom, 0px) + 0.9rem);
   overflow: hidden;
+  transition: height 0.25s ease;
+}
+
+.location-sheet.is-dragging {
+  transition: none;
 }
 
 .location-sheet[hidden] {
@@ -605,12 +621,37 @@ body.is-route-edit-mode .maplibregl-ctrl-bottom-right {
 }
 
 .location-sheet__handle {
-  align-self: center;
+  width: 100%;
+  height: 1.25rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  cursor: grab;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.location-sheet__handle::before {
+  content: "";
   width: 2.5rem;
   height: 4px;
   border-radius: 999px;
   background: var(--border);
-  flex-shrink: 0;
+}
+
+.location-sheet__handle:hover::before {
+  background: var(--address);
+}
+
+.location-sheet.is-dragging .location-sheet__handle {
+  cursor: grabbing;
+}
+
+.location-sheet__handle:focus-visible {
+  outline: 2px solid var(--dry);
+  outline-offset: 4px;
 }
 
 .location-sheet__destination {

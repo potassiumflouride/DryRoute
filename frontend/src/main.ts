@@ -3,6 +3,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { layers, namedFlavor } from "@protomaps/basemaps";
 import type { GeocodeResult } from "./types";
 import { createLocationSearch } from "./search";
+import { initSheetDrag } from "./sheetDrag";
 import { initRadar } from "./radar";
 import { initRoute } from "./route";
 import { applyTheme, getInitialTheme, type Theme } from "./theme";
@@ -180,6 +181,10 @@ if (app) {
   let bootstrapInFlight = false;
 
   const plannerSheet = document.querySelector<HTMLDivElement>(".location-sheet");
+  const plannerSheetHandle = document.querySelector<HTMLDivElement>(".location-sheet__handle");
+  const sheetDrag =
+    plannerSheet && plannerSheetHandle ? initSheetDrag(plannerSheet, plannerSheetHandle) : null;
+
   const originGroup = document.querySelector<HTMLDivElement>(".location-sheet__origin");
   const originInput = document.querySelector<HTMLInputElement>(".location-sheet__origin .search__input");
   const hint = document.querySelector<HTMLParagraphElement>(".search-hint");
@@ -189,6 +194,7 @@ if (app) {
 
   const showPlannerSheet = () => {
     if (plannerSheet) plannerSheet.hidden = false;
+    sheetDrag?.expand();
   };
   const hidePlannerSheet = () => {
     if (plannerSheet) plannerSheet.hidden = true;
