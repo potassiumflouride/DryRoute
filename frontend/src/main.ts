@@ -3,6 +3,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { layers, namedFlavor } from "@protomaps/basemaps";
 import type { GeocodeResult } from "./types";
 import { createLocationSearch } from "./search";
+import { MapAttributionControl } from "./attribution";
 import { initSheetDrag } from "./sheetDrag";
 import { initRadar } from "./radar";
 import { initRoute } from "./route";
@@ -170,7 +171,7 @@ if (app) {
     attributionControl: false,
   });
   map.addControl(new maplibregl.NavigationControl({ showZoom: false }), "bottom-right");
-  map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-left");
+  map.addControl(new MapAttributionControl(), "bottom-left");
   const geolocate = new maplibregl.GeolocateControl({
     positionOptions: { enableHighAccuracy: false },
     trackUserLocation: false,

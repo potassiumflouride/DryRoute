@@ -908,6 +908,119 @@ body.is-route-edit-mode .maplibregl-ctrl-bottom-left {
   margin: 0;
 }
 
+.maplibregl-ctrl-bottom-left {
+  margin: 0;
+}
+
+.map-attribution.maplibregl-ctrl {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0 0 calc(env(safe-area-inset-bottom, 0px) + 0.5rem) calc(env(safe-area-inset-left, 0px) + 0.5rem);
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: var(--surface-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+.map-attribution__info-btn {
+  flex-shrink: 0;
+  border: none;
+  background-color: var(--address);
+  -webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E");
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: 16px 16px;
+  mask-size: 16px 16px;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.map-attribution__info-btn:hover {
+  background-color: var(--mist);
+}
+
+.map-attribution__text {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  color: var(--address);
+  text-decoration: underline;
+  white-space: nowrap;
+}
+
+.map-attribution__text:hover {
+  color: var(--mist);
+}
+
+.map-attribution__bubble {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 0;
+  z-index: 4;
+  width: max-content;
+  max-width: min(19rem, calc(100vw - 2rem));
+  max-height: min(60vh, 60dvh);
+  overflow-y: auto;
+  border-radius: 0.9rem;
+  background: var(--surface-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 8px 24px var(--shadow);
+  padding: 0.65rem 0.8rem;
+}
+
+.map-attribution__bubble[hidden] {
+  display: none;
+}
+
+.map-attribution__eyebrow {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--address);
+  padding-bottom: 0.5rem;
+}
+
+.map-attribution__list {
+  margin: 0;
+}
+
+.map-attribution__row {
+  padding: 0.4rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.map-attribution__row:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.map-attribution__row dt {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--address);
+}
+
+.map-attribution__row dd {
+  margin: 0.1rem 0 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--mist);
+}
+
 .maplibregl-ctrl-bottom-right .maplibregl-ctrl-group {
   /* Clears the tallest possible bottom panel - the 37.5vh search modal. */
   margin: 0 calc(env(safe-area-inset-right, 0px) + 1rem) calc(env(safe-area-inset-bottom, 0px) + 37.5vh + 6.75rem) 0;
