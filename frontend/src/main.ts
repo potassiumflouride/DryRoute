@@ -123,25 +123,25 @@ if (app) {
             </button>
           </div>
         </div>
+        <div class="search search--origin location-sheet__origin" hidden>
+          <div class="search__field">
+            <span class="search__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            </span>
+            <input
+              class="search__input"
+              type="text"
+              placeholder="Search a location in Singapore"
+              autocomplete="off"
+            />
+            <button class="search__clear" type="button" aria-label="Clear location" hidden>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </div>
         <div class="location-sheet__body">
           <ul class="search__results location-sheet__destination-results" hidden></ul>
-          <div class="search search--origin location-sheet__origin" hidden>
-            <div class="search__field">
-              <span class="search__icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-              </span>
-              <input
-                class="search__input"
-                type="text"
-                placeholder="Search a location in Singapore"
-                autocomplete="off"
-              />
-              <button class="search__clear" type="button" aria-label="Clear location" hidden>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-              </button>
-            </div>
-            <ul class="search__results" hidden></ul>
-          </div>
+          <ul class="search__results location-sheet__origin-results" hidden></ul>
           <p class="search-hint" hidden aria-live="polite"></p>
           <div class="location-sheet__navigate-row">
             <button class="cancel-button" type="button" hidden>Cancel</button>
@@ -239,7 +239,7 @@ if (app) {
 
   const originSearch = createLocationSearch(map, {
     inputSelector: ".location-sheet__origin .search__input",
-    listSelector: ".location-sheet__origin .search__results",
+    listSelector: ".location-sheet__origin-results",
     markerColorVar: "--dry",
     onSelect: (result) => {
       originSet = true;

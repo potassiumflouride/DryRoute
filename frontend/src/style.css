@@ -369,7 +369,12 @@ body.is-route-edit-mode .maplibregl-ctrl-bottom-left {
 }
 
 .location-sheet__origin {
+  flex-shrink: 0;
   margin-top: 0.1rem;
+}
+
+.location-sheet__origin[hidden] {
+  display: none;
 }
 
 .search-hint {
