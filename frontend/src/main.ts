@@ -55,12 +55,6 @@ if (app) {
       <button class="route-toast__cancel" type="button" aria-label="Dismiss">Dismiss</button>
     </div>
     <div class="map-controls">
-      <button class="recenter-btn" type="button" aria-label="Recenter on my location">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
-      </button>
-      <button class="radar-toggle-btn is-active" type="button" aria-label="Toggle rain radar" aria-pressed="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5s6.5 7 6.5 11.5a6.5 6.5 0 1 1-13 0C5.5 9.5 12 2.5 12 2.5z"/></svg>
-      </button>
       <button class="edit-start-btn" type="button" aria-label="Edit route" disabled hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
       </button>
@@ -72,6 +66,12 @@ if (app) {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
         </button>
       </div>
+      <button class="recenter-btn" type="button" aria-label="Recenter on my location">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+      </button>
+      <button class="radar-toggle-btn is-active" type="button" aria-label="Toggle rain radar" aria-pressed="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5s6.5 7 6.5 11.5a6.5 6.5 0 1 1-13 0C5.5 9.5 12 2.5 12 2.5z"/></svg>
+      </button>
     </div>
     <div class="bottom-stack">
       <div class="radar-player" role="group" aria-label="Rain radar playback">
@@ -172,8 +172,10 @@ if (app) {
       [104.05, 1.48], // NE
     ],
     fitBoundsOptions: { padding: { top: 24, bottom: 24, right: 24, left: 24 } },
+    attributionControl: false,
   });
   map.addControl(new maplibregl.NavigationControl(), "bottom-right");
+  map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-left");
   const radar = initRadar(map);
   const route = initRoute(map);
 

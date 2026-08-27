@@ -251,7 +251,8 @@ body.is-route-edit-mode .maplibregl-canvas {
 body.is-route-edit-mode .app-header,
 body.is-route-edit-mode .bottom-stack,
 body.is-route-edit-mode .route-hint-bubble,
-body.is-route-edit-mode .maplibregl-ctrl-bottom-right {
+body.is-route-edit-mode .maplibregl-ctrl-bottom-right,
+body.is-route-edit-mode .maplibregl-ctrl-bottom-left {
   display: none;
 }
 
@@ -260,8 +261,8 @@ body.is-route-edit-mode .maplibregl-ctrl-bottom-right {
   right: calc(env(safe-area-inset-right, 0px) + 1rem);
   /* Stacks above the maplibre NavigationControl below it, which in turn clears
      the tallest possible bottom panel - the 37.5vh planner sheet. */
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 37.5vh + 10.75rem);
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 37.5dvh + 10.75rem);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 37.5vh + 13rem);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 37.5dvh + 13rem);
   z-index: 3;
   display: flex;
   flex-direction: column;
@@ -413,7 +414,8 @@ body.is-route-edit-mode .maplibregl-ctrl-bottom-right {
   position: absolute;
   left: 1rem;
   right: 1rem;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
+  /* Lifted clear of the bottom-right map attribution control. */
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 2.75rem);
   z-index: 2;
   max-width: 30rem;
   margin: 0 auto;
@@ -874,7 +876,7 @@ body.is-route-edit-mode .maplibregl-ctrl-bottom-right {
   left: 1rem;
   right: 1rem;
   /* Sits directly above the bottom-stack (radar player + route sheet). */
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 11rem);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 12.75rem);
   z-index: 2;
   max-width: 30rem;
   margin: 0 auto;
@@ -935,6 +937,6 @@ body.is-route-edit-mode .maplibregl-ctrl-bottom-right {
      horizontal center as the 44px .map-controls buttons above it (both are
      nominally right: 1rem, but their differing widths would otherwise put
      the visual centers out of line). */
-  margin: 0 calc(env(safe-area-inset-right, 0px) + 1rem + 7.5px) calc(env(safe-area-inset-bottom, 0px) + 37.5vh + 2rem) 0;
-  margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 37.5dvh + 2rem);
+  margin: 0 calc(env(safe-area-inset-right, 0px) + 1rem + 7.5px) calc(env(safe-area-inset-bottom, 0px) + 37.5vh + 6.75rem) 0;
+  margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 37.5dvh + 6.75rem);
 }
