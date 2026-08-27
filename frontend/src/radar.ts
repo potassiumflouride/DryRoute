@@ -110,7 +110,7 @@ export function initRadar(map: maplibregl.Map): RadarController {
   let currentIndex = 0;
   let isLive = true;
   let playing = false;
-  let enabled = true;
+  let scrubberVisible = true;
   let playTimer: ReturnType<typeof setInterval> | undefined;
 
   const formatTime = (iso: string) =>
@@ -140,7 +140,6 @@ export function initRadar(map: maplibregl.Map): RadarController {
       if (map.getSource(SOURCE_ID)) return;
       map.addSource(SOURCE_ID, { type: "image", url: sourceUrl(frame), coordinates });
       map.addLayer({ id: LAYER_ID, type: "raster", source: SOURCE_ID, paint: { "raster-opacity": 0.6 } });
-      map.setLayoutProperty(LAYER_ID, "visibility", enabled ? "visible" : "none");
     });
   };
 
@@ -255,22 +254,19 @@ export function initRadar(map: maplibregl.Map): RadarController {
     render();
   });
 
-  const setEnabled = (next: boolean) => {
-    enabled = next;
-    toggleBtn.classList.toggle("is-active", enabled);
-    toggleBtn.setAttribute("aria-pressed", String(enabled));
-    root.hidden = !enabled;
-    if (!enabled) {
+  const setScrubberVisible = (next: boolean) => {
+    scrubberVisible = next;
+    toggleBtn.classList.toggle("is-active", scrubberVisible);
+    toggleBtn.setAttribute("aria-pressed", String(scrubberVisible));
+    root.hidden = !scrubberVisible;
+    if (!scrubberVisible) {
       stopPlaying();
     } else {
       render();
     }
-    if (map.getLayer(LAYER_ID)) {
-      map.setLayoutProperty(LAYER_ID, "visibility", enabled ? "visible" : "none");
-    }
   };
 
-  toggleBtn.addEventListener("click", () => setEnabled(!enabled));
+  toggleBtn.addEventListener("click", () => setScrubberVisible(!scrubberVisible));
 
   void backfill();
   scheduleNextPoll();
@@ -278,7 +274,7 @@ export function initRadar(map: maplibregl.Map): RadarController {
   return {
     reattach: () => {
       if (frames.length > 0) applySource();
-      root.hidden = !enabled;
+      root.hidden = !scrubberVisible;
     },
   };
 }

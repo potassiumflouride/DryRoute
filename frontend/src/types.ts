@@ -26,12 +26,3 @@ export interface Route {
   distanceMeters: number;
   durationSeconds: number;
 }
-
-export interface RainZone {
-  type: "FeatureCollection";
-  features: Array<{
-    type: "Feature";
-    properties: Record<string, never>;
-    geometry: { type: "Polygon"; coordinates: number[][][] };
-  }>;
-}

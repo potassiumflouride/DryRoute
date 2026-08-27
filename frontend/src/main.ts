@@ -5,7 +5,6 @@ import type { GeocodeResult } from "./types";
 import { createLocationSearch } from "./search";
 import { initRadar } from "./radar";
 import { initRoute } from "./route";
-import { initDevMode } from "./devmode";
 import { applyTheme, getInitialTheme, type Theme } from "./theme";
 import { getCurrentLocation } from "./geolocation";
 import "./style.css";
@@ -42,43 +41,12 @@ if (app) {
       <img class="app-header__mark" src="/pwa-192x192.png" alt="" />
       <span class="app-header__wordmark">Dry<strong>Route</strong></span>
       <div class="app-header__actions">
-        <button class="devmode-toggle" type="button" aria-label="Toggle dev rain-zone testing mode" aria-pressed="false" hidden>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5s6.5 7 6.5 11.5a6.5 6.5 0 1 1-13 0C5.5 9.5 12 2.5 12 2.5z"/></svg>
-        </button>
         <button class="theme-toggle" type="button" aria-label="Toggle light/dark theme">
           <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
           <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
         </button>
       </div>
     </header>
-    <div class="search-pill-group">
-      <div class="search search--destination">
-        <span class="search__icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-        </span>
-        <input
-          class="search__input"
-          type="text"
-          placeholder="Where to?"
-          autocomplete="off"
-        />
-        <ul class="search__results" hidden></ul>
-      </div>
-      <div class="search search--origin">
-        <span class="search__icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-        </span>
-        <input
-          class="search__input"
-          type="text"
-          placeholder="Search a location in Singapore"
-          autocomplete="off"
-        />
-        <ul class="search__results" hidden></ul>
-      </div>
-      <p class="search-hint" hidden aria-live="polite"></p>
-      <button class="navigate-button" type="button" hidden>Navigate</button>
-    </div>
     <div class="route-hint-bubble" hidden>Drag the route to customise</div>
     <div class="route-toast" hidden>
       <span class="route-toast__dot"></span>
@@ -130,6 +98,50 @@ if (app) {
         </div>
         <p class="radar-player__status" hidden></p>
       </div>
+      <div class="location-sheet">
+        <div class="location-sheet__handle"></div>
+        <div class="search search--destination location-sheet__destination">
+          <div class="search__field">
+            <span class="search__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            </span>
+            <input
+              class="search__input"
+              type="text"
+              placeholder="Where to?"
+              autocomplete="off"
+            />
+            <button class="search__clear" type="button" aria-label="Clear destination" hidden>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="location-sheet__body">
+          <ul class="search__results location-sheet__destination-results" hidden></ul>
+          <div class="search search--origin location-sheet__origin" hidden>
+            <div class="search__field">
+              <span class="search__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+              </span>
+              <input
+                class="search__input"
+                type="text"
+                placeholder="Search a location in Singapore"
+                autocomplete="off"
+              />
+              <button class="search__clear" type="button" aria-label="Clear location" hidden>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <ul class="search__results" hidden></ul>
+          </div>
+          <p class="search-hint" hidden aria-live="polite"></p>
+          <div class="location-sheet__navigate-row">
+            <button class="cancel-button" type="button" hidden>Cancel</button>
+            <button class="navigate-button" type="button" hidden>Navigate</button>
+          </div>
+        </div>
+      </div>
       <div class="route-sheet" hidden>
         <div class="route-sheet__handle"></div>
         <p class="route-sheet__status" hidden></p>
@@ -140,16 +152,10 @@ if (app) {
           </div>
         </div>
         <div class="route-sheet__actions">
+          <button class="route-sheet__back-btn" type="button" aria-label="Back to edit starting point" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
           <button class="route-reset" type="button" hidden>Reset</button>
-          <div class="route-sheet__more">
-            <button class="route-sheet__more-btn" type="button" aria-label="More export options" aria-haspopup="true" disabled>&#8943;</button>
-            <div class="route-sheet__more-menu" hidden>
-              <button class="share-menu__option share-menu__option--apple" type="button">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.1 7-11.5A7 7 0 0 0 5 9.5C5 14.9 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
-                <span>Open in Apple Maps</span>
-              </button>
-            </div>
-          </div>
           <button class="route-sheet__export-btn" type="button" disabled>Open in Google Maps &#8599;</button>
         </div>
       </div>
@@ -168,19 +174,35 @@ if (app) {
   });
   map.addControl(new maplibregl.NavigationControl(), "bottom-right");
   const radar = initRadar(map);
-  const devMode = initDevMode(map);
-  const route = initRoute(map, devMode.isOn);
+  const route = initRoute(map);
 
   let originSet = false;
   let bootstrapInFlight = false;
 
-  const originGroup = document.querySelector<HTMLDivElement>(".search--origin");
-  const originInput = document.querySelector<HTMLInputElement>(".search--origin .search__input");
+  const plannerSheet = document.querySelector<HTMLDivElement>(".location-sheet");
+  const originGroup = document.querySelector<HTMLDivElement>(".location-sheet__origin");
+  const originInput = document.querySelector<HTMLInputElement>(".location-sheet__origin .search__input");
   const hint = document.querySelector<HTMLParagraphElement>(".search-hint");
   const navigateButton = document.querySelector<HTMLButtonElement>(".navigate-button");
+  const cancelButton = document.querySelector<HTMLButtonElement>(".cancel-button");
   const recenterBtn = document.querySelector<HTMLButtonElement>(".recenter-btn");
 
-  const revealOrigin = () => originGroup?.classList.add("is-shown");
+  const showPlannerSheet = () => {
+    if (plannerSheet) plannerSheet.hidden = false;
+  };
+  const hidePlannerSheet = () => {
+    if (plannerSheet) plannerSheet.hidden = true;
+  };
+  const revealOrigin = () => {
+    if (originGroup) originGroup.hidden = false;
+    if (cancelButton) cancelButton.hidden = false;
+  };
+  const hideOrigin = () => {
+    if (originGroup) originGroup.hidden = true;
+    if (cancelButton) cancelButton.hidden = true;
+    originSet = false;
+    clearHint();
+  };
   const setHint = (text: string) => {
     if (!hint) return;
     hint.textContent = text;
@@ -193,20 +215,39 @@ if (app) {
   };
 
   const originSearch = createLocationSearch(map, {
-    inputSelector: ".search--origin .search__input",
-    listSelector: ".search--origin .search__results",
+    inputSelector: ".location-sheet__origin .search__input",
+    listSelector: ".location-sheet__origin .search__results",
     markerColorVar: "--dry",
     onSelect: (result) => {
       originSet = true;
       clearHint();
       route.setOrigin(result);
     },
+    onClear: () => {
+      originSet = false;
+      clearHint();
+    },
   });
   createLocationSearch(map, {
-    inputSelector: ".search--destination .search__input",
-    listSelector: ".search--destination .search__results",
+    inputSelector: ".location-sheet__destination .search__input",
+    listSelector: ".location-sheet__destination-results",
     markerColorVar: "--rain",
-    onSelect: (result) => route.setDestination(result),
+    onSelect: (result) => {
+      route.setDestination(result);
+      if (navigateButton) navigateButton.hidden = false;
+    },
+    onClear: () => {
+      if (navigateButton) navigateButton.hidden = true;
+      hideOrigin();
+    },
+    onMarkerClick: () => {
+      showPlannerSheet();
+    },
+  });
+
+  cancelButton?.addEventListener("click", () => {
+    originSearch.clear();
+    hideOrigin();
   });
 
   const handleNavigateClick = async (): Promise<void> => {
@@ -228,17 +269,26 @@ if (app) {
         clearHint();
         setHint("Couldn't get your location - search for a starting point");
         originInput?.focus();
-        return;
       } finally {
         bootstrapInFlight = false;
         navigateButton.disabled = false;
       }
+      return; // let the user review/edit the origin before actually routing
     }
+    hidePlannerSheet();
     void route.navigateNow();
   };
 
   navigateButton?.addEventListener("click", () => {
     void handleNavigateClick();
+  });
+
+  const backBtn = document.querySelector<HTMLButtonElement>(".route-sheet__back-btn");
+  backBtn?.addEventListener("click", () => {
+    if (backBtn.disabled) return;
+    route.cancelRoute();
+    revealOrigin();
+    showPlannerSheet();
   });
 
   recenterBtn?.addEventListener("click", () => {
@@ -258,7 +308,6 @@ if (app) {
     applyTheme(next);
     map.setStyle(buildMapStyle(next));
     radar.reattach();
-    devMode.reattach();
     route.reattach();
   });
 }

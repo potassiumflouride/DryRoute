@@ -16,10 +16,13 @@ export function createLocationSearch(
     listSelector: string;
     markerColorVar: string;
     onSelect: (result: GeocodeResult) => void;
+    onMarkerClick?: () => void;
+    onClear?: () => void;
   },
 ): LocationSearch {
   const input = document.querySelector<HTMLInputElement>(opts.inputSelector);
   const list = document.querySelector<HTMLUListElement>(opts.listSelector);
+  const clearButton = input?.closest(".search")?.querySelector<HTMLButtonElement>(".search__clear") ?? null;
 
   const noop: LocationSearch = { setValue: () => {}, clear: () => {}, setExternalSelection: () => {} };
   if (!input || !list) return noop;
@@ -27,6 +30,11 @@ export function createLocationSearch(
   let marker: maplibregl.Marker | null = null;
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
   let requestId = 0;
+
+  const updateClearButton = () => {
+    if (!clearButton) return;
+    clearButton.hidden = input.value.length === 0;
+  };
 
   const renderResults = (results: GeocodeResult[]) => {
     list.innerHTML = "";
@@ -61,11 +69,28 @@ export function createLocationSearch(
     })
       .setLngLat([result.lon, result.lat])
       .addTo(map);
+    if (opts.onMarkerClick) {
+      marker.getElement().addEventListener("click", (event) => {
+        event.stopPropagation();
+        opts.onMarkerClick?.();
+      });
+    }
 
     input.value = result.name;
     list.hidden = true;
     input.blur();
+    updateClearButton();
     opts.onSelect(result);
+  };
+
+  const clearInput = () => {
+    input.value = "";
+    list.hidden = true;
+    updateClearButton();
+    if (marker) {
+      marker.remove();
+      marker = null;
+    }
   };
 
   const search = async (query: string) => {
@@ -83,6 +108,7 @@ export function createLocationSearch(
   };
 
   input.addEventListener("input", () => {
+    updateClearButton();
     const query = input.value.trim();
     clearTimeout(debounceTimer);
     if (query.length < 2) {
@@ -92,6 +118,12 @@ export function createLocationSearch(
     debounceTimer = setTimeout(() => void search(query), DEBOUNCE_MS);
   });
 
+  clearButton?.addEventListener("click", () => {
+    clearInput();
+    input.focus();
+    opts.onClear?.();
+  });
+
   document.addEventListener("click", (event) => {
     if (!(event.target instanceof Node)) return;
     if (!list.contains(event.target) && event.target !== input) {
@@ -99,18 +131,14 @@ export function createLocationSearch(
     }
   });
 
+  updateClearButton();
+
   return {
     setValue: (name: string) => {
       input.value = name;
+      updateClearButton();
     },
-    clear: () => {
-      input.value = "";
-      list.hidden = true;
-      if (marker) {
-        marker.remove();
-        marker = null;
-      }
-    },
+    clear: clearInput,
     setExternalSelection: (result: GeocodeResult, opts?: { flyTo?: boolean }) => {
       selectResult(result, opts);
     },

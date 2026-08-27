@@ -1,9 +1,8 @@
 import maplibregl from "maplibre-gl";
 import * as turf from "@turf/turf";
 import type { GeocodeResult, Route } from "./types";
-import { FAKE_RAIN_ZONE } from "./devmode";
 import { addToMapWhenReady } from "./mapReady";
-import { buildExportPoints, buildGoogleMapsUrl, buildAppleMapsUrl } from "./mapExport";
+import { buildExportPoints, buildGoogleMapsUrl } from "./mapExport";
 
 const ROUTE_SOURCE_ID = "route";
 const ROUTE_CASING_LAYER_ID = "route-layer-casing";
@@ -24,10 +23,11 @@ export interface RouteController {
   setOrigin: (result: GeocodeResult) => void;
   setDestination: (result: GeocodeResult) => void;
   navigateNow: () => Promise<void>;
+  cancelRoute: () => void;
   reattach: () => void;
 }
 
-export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteController {
+export function initRoute(map: maplibregl.Map): RouteController {
   const navigateButton = document.querySelector<HTMLButtonElement>(".navigate-button");
   const toast = document.querySelector<HTMLDivElement>(".route-toast");
   const toastMessage = document.querySelector<HTMLSpanElement>(".route-toast__message");
@@ -42,15 +42,14 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
   const editSaveBtn = document.querySelector<HTMLButtonElement>(".edit-save-btn");
   const editDiscardBtn = document.querySelector<HTMLButtonElement>(".edit-discard-btn");
   const exportBtn = document.querySelector<HTMLButtonElement>(".route-sheet__export-btn");
-  const moreBtn = document.querySelector<HTMLButtonElement>(".route-sheet__more-btn");
-  const moreMenu = document.querySelector<HTMLDivElement>(".route-sheet__more-menu");
-  const appleOption = document.querySelector<HTMLButtonElement>(".share-menu__option--apple");
+  const backBtn = document.querySelector<HTMLButtonElement>(".route-sheet__back-btn");
   const hintBubble = document.querySelector<HTMLDivElement>(".route-hint-bubble");
 
   const noop: RouteController = {
     setOrigin: () => {},
     setDestination: () => {},
     navigateNow: async () => {},
+    cancelRoute: () => {},
     reattach: () => {},
   };
   if (
@@ -68,9 +67,7 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     !editSaveBtn ||
     !editDiscardBtn ||
     !exportBtn ||
-    !moreBtn ||
-    !moreMenu ||
-    !appleOption ||
+    !backBtn ||
     !hintBubble
   )
     return noop;
@@ -90,10 +87,6 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
   let hasEditedRoute = false;
 
   const isTouchDevice = () => window.matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0;
-
-  const updateNavigateEnabled = () => {
-    navigateButton.hidden = !destination;
-  };
 
   const routeColor = () => getComputedStyle(document.documentElement).getPropertyValue("--rain").trim();
 
@@ -161,7 +154,7 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     lastRouteFeature = feature;
     editStartBtn.disabled = false;
     exportBtn.disabled = false;
-    moreBtn.disabled = false;
+    backBtn.disabled = false;
     const source = map.getSource(ROUTE_SOURCE_ID) as maplibregl.GeoJSONSource | undefined;
     if (source) {
       source.setData(feature);
@@ -263,8 +256,7 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     hintBubble.hidden = true;
     editStartBtn.disabled = true;
     exportBtn.disabled = true;
-    moreBtn.disabled = true;
-    closeMoreMenu();
+    backBtn.disabled = true;
     if (isEditMode) {
       isEditMode = false;
       applyEditModeState();
@@ -300,28 +292,6 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     toast.classList.remove("is-blocked");
   };
 
-  const closeMoreMenu = () => {
-    moreMenu.hidden = true;
-    document.removeEventListener("click", onMoreMenuOutsideClick, true);
-    document.removeEventListener("keydown", onMoreMenuKeydown);
-  };
-
-  const openMoreMenu = () => {
-    moreMenu.hidden = false;
-    document.addEventListener("click", onMoreMenuOutsideClick, true);
-    document.addEventListener("keydown", onMoreMenuKeydown);
-  };
-
-  const onMoreMenuOutsideClick = (event: MouseEvent) => {
-    const target = event.target as Node;
-    if (moreMenu.contains(target) || moreBtn.contains(target)) return;
-    closeMoreMenu();
-  };
-
-  const onMoreMenuKeydown = (event: KeyboardEvent) => {
-    if (event.key === "Escape") closeMoreMenu();
-  };
-
   const showToast = (message: string, blocked: boolean) => {
     toastMessage.textContent = message;
     toast.hidden = false;
@@ -336,10 +306,6 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
   const dismissHintBubble = () => {
     hasEditedRoute = true;
     hintBubble.hidden = true;
-  };
-
-  const intersectsRainZone = (feature: GeoJSON.Feature<GeoJSON.LineString>): boolean => {
-    return turf.lineIntersect(feature, FAKE_RAIN_ZONE).features.length > 0;
   };
 
   const onRouteDragMove = (event: maplibregl.MapMouseEvent) => {
@@ -486,13 +452,8 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
       showSummary(route);
       showHintBubble();
 
-      if (isDevMode() && intersectsRainZone(feature)) {
-        drawRoute(feature, true);
-        showToast("Route crosses the rain - drag the route to move it out of the rain", true);
-      } else {
-        drawRoute(feature, false);
-        hideToast();
-      }
+      drawRoute(feature, false);
+      hideToast();
       drawWaypoints();
     } catch {
       routeSheetStatus.hidden = true;
@@ -505,8 +466,7 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
   editStartBtn.disabled = true;
   editConfirmGroup.hidden = true;
   exportBtn.disabled = true;
-  moreBtn.disabled = true;
-  moreMenu.hidden = true;
+  backBtn.disabled = true;
 
   editStartBtn.addEventListener("click", () => {
     if (editStartBtn.disabled) return;
@@ -533,19 +493,6 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
     if (!lastRoute || !lastRouteAnchors) return;
     const points = buildExportPoints(lastRoute, lastRouteAnchors);
     window.open(buildGoogleMapsUrl(points), "_blank", "noopener,noreferrer");
-  });
-
-  moreBtn.addEventListener("click", () => {
-    if (moreBtn.disabled) return;
-    if (moreMenu.hidden) openMoreMenu();
-    else closeMoreMenu();
-  });
-
-  appleOption.addEventListener("click", () => {
-    if (!lastRoute || !lastRouteAnchors) return;
-    const points = buildExportPoints(lastRoute, lastRouteAnchors);
-    window.open(buildAppleMapsUrl(points), "_blank", "noopener,noreferrer");
-    closeMoreMenu();
   });
 
   toastDismiss.addEventListener("click", hideToast);
@@ -579,7 +526,6 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
       waypoints = [];
       clearRoute();
       hideToast();
-      updateNavigateEnabled();
     },
     setDestination: (result: GeocodeResult) => {
       destination = { lat: result.lat, lon: result.lon };
@@ -587,11 +533,14 @@ export function initRoute(map: maplibregl.Map, isDevMode: () => boolean): RouteC
       waypoints = [];
       clearRoute();
       hideToast();
-      updateNavigateEnabled();
     },
     navigateNow: async () => {
       waypoints = [];
       await navigate();
+    },
+    cancelRoute: () => {
+      clearRoute();
+      hideToast();
     },
     reattach: () => {
       if (lastRouteFeature) drawRoute(lastRouteFeature, lastRouteAtRisk);

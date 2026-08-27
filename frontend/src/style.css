@@ -141,35 +141,6 @@ body {
   gap: 0.5rem;
 }
 
-.devmode-toggle {
-  pointer-events: auto;
-  width: 44px;
-  height: 44px;
-  border: none;
-  border-radius: 50%;
-  background: var(--slate);
-  color: var(--mist);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.devmode-toggle svg {
-  width: 18px;
-  height: 18px;
-}
-
-.devmode-toggle:hover {
-  color: var(--rain);
-}
-
-.devmode-toggle.is-active {
-  background: var(--rain);
-  color: var(--ink);
-}
-
 .edit-start-btn,
 .edit-save-btn,
 .edit-discard-btn,
@@ -212,6 +183,10 @@ body {
   color: var(--dry);
 }
 
+.edit-start-btn[hidden] {
+  display: none;
+}
+
 .edit-start-btn:disabled {
   opacity: 0.5;
   cursor: default;
@@ -224,12 +199,7 @@ body {
   color: var(--ink);
 }
 
-.route-sheet__more {
-  position: relative;
-  flex-shrink: 0;
-}
-
-.route-sheet__more-btn {
+.route-sheet__back-btn {
   pointer-events: auto;
   width: 44px;
   height: 44px;
@@ -241,61 +211,21 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 1.2rem;
-  font-weight: 700;
-  line-height: 1;
   flex-shrink: 0;
 }
 
-.route-sheet__more-btn:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.route-sheet__more-menu {
-  pointer-events: auto;
-  position: absolute;
-  bottom: calc(100% + 0.6rem);
-  right: 0;
-  width: max-content;
-  max-width: 15rem;
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  background: var(--slate);
-  box-shadow: 0 4px 16px var(--shadow);
-  padding: 0.35rem;
-}
-
-.route-sheet__more-menu:not([hidden]) {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.share-menu__option {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  border: none;
-  border-radius: 0.5rem;
-  padding: 0.55rem 0.6rem;
-  background: transparent;
-  color: var(--mist);
-  font-family: var(--font-body);
-  font-size: 0.85rem;
-  text-align: left;
-  cursor: pointer;
-}
-
-.share-menu__option svg {
+.route-sheet__back-btn svg {
   width: 18px;
   height: 18px;
-  flex-shrink: 0;
-  color: var(--address);
 }
 
-.share-menu__option:hover {
-  background: var(--hover);
+.route-sheet__back-btn:hover {
+  color: var(--dry);
+}
+
+.route-sheet__back-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .edit-confirm-group:not([hidden]) {
@@ -319,7 +249,6 @@ body.is-route-edit-mode .maplibregl-canvas {
 }
 
 body.is-route-edit-mode .app-header,
-body.is-route-edit-mode .search-pill-group,
 body.is-route-edit-mode .bottom-stack,
 body.is-route-edit-mode .route-hint-bubble,
 body.is-route-edit-mode .maplibregl-ctrl-bottom-right {
@@ -329,29 +258,20 @@ body.is-route-edit-mode .maplibregl-ctrl-bottom-right {
 .map-controls {
   position: absolute;
   right: calc(env(safe-area-inset-right, 0px) + 1rem);
-  /* Sits above the maplibre NavigationControl (zoom/compass), which sits above the bottom-stack (radar player + route sheet). */
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 15.5rem);
-  z-index: 2;
+  /* Stacks above the maplibre NavigationControl below it, which in turn clears
+     the tallest possible bottom panel - the 37.5vh planner sheet. */
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 37.5vh + 10.75rem);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 37.5dvh + 10.75rem);
+  z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
 }
 
-.search-pill-group {
-  position: absolute;
-  top: calc(env(safe-area-inset-top, 0px) + 3.75rem);
-  left: 1rem;
-  right: 1rem;
-  z-index: 2;
-  max-width: 22rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.search {
+.search__field {
   position: relative;
+  flex-shrink: 0;
 }
 
 .search__icon {
@@ -369,15 +289,39 @@ body.is-route-edit-mode .maplibregl-ctrl-bottom-right {
   height: 18px;
 }
 
-.search--origin {
-  opacity: 0;
-  transform: translateY(-6px);
-  transition: opacity 0.2s ease, transform 0.2s ease;
+.search__clear {
+  position: absolute;
+  right: 0.55rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--address);
+  cursor: pointer;
 }
 
-.search--origin.is-shown {
-  opacity: 1;
-  transform: translateY(0);
+.search__clear svg {
+  width: 16px;
+  height: 16px;
+}
+
+.search__clear:hover {
+  color: var(--mist);
+  background: var(--hover);
+}
+
+.search__clear[hidden] {
+  display: none;
+}
+
+.location-sheet__origin {
+  margin-top: 0.1rem;
 }
 
 .search-hint {
@@ -392,7 +336,7 @@ body.is-route-edit-mode .maplibregl-ctrl-bottom-right {
   box-sizing: border-box;
   border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 0.75rem 1rem 0.75rem 2.6rem;
+  padding: 0.75rem 2.4rem 0.75rem 2.6rem;
   min-height: 44px;
   background: var(--surface-glass);
   backdrop-filter: blur(16px);
@@ -639,16 +583,83 @@ body.is-route-edit-mode .maplibregl-ctrl-bottom-right {
   }
 }
 
+.location-sheet {
+  width: 100%;
+  height: 37.5vh;
+  height: 37.5dvh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border-radius: 1.25rem;
+  background: var(--surface-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 -4px 24px var(--shadow);
+  padding: 0.6rem 1.1rem calc(env(safe-area-inset-bottom, 0px) + 0.9rem);
+  overflow: hidden;
+}
+
+.location-sheet[hidden] {
+  display: none;
+}
+
+.location-sheet__handle {
+  align-self: center;
+  width: 2.5rem;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.location-sheet__destination {
+  flex-shrink: 0;
+}
+
+.location-sheet__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.location-sheet__body .search__results {
+  position: static;
+  margin: 0;
+  padding: 0.25rem 0;
+  background: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+  border-radius: 0;
+  max-height: none;
+}
+
+.location-sheet__body .search__results[hidden] {
+  display: none;
+}
+
+.location-sheet__navigate-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
 .navigate-button {
-  align-self: flex-start;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 44px;
   border: none;
-  border-radius: 0.75rem;
-  padding: 0.55rem 1.1rem;
+  border-radius: 0.85rem;
+  padding: 0.75rem 1.1rem;
   background: var(--dry);
   color: var(--ink);
   font-family: var(--font-body);
-  font-weight: 600;
-  font-size: 0.85rem;
+  font-weight: 700;
+  font-size: 0.9rem;
   cursor: pointer;
   box-shadow: 0 4px 16px var(--shadow);
 }
@@ -658,6 +669,29 @@ body.is-route-edit-mode .maplibregl-ctrl-bottom-right {
   color: var(--placeholder);
   cursor: not-allowed;
   box-shadow: none;
+}
+
+.cancel-button {
+  flex: 0 0 auto;
+  min-height: 44px;
+  border: none;
+  border-radius: 0.85rem;
+  padding: 0.75rem 0.9rem;
+  background: var(--danger);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+.cancel-button[hidden] {
+  display: none;
+}
+
+.cancel-button:hover {
+  filter: brightness(1.08);
 }
 
 .route-hint-bubble {
@@ -855,6 +889,11 @@ body.is-route-edit-mode .maplibregl-ctrl-bottom-right {
 }
 
 .maplibregl-ctrl-bottom-right .maplibregl-ctrl-group {
-  /* Sits directly above the bottom-stack (radar player + route sheet). Right edge matches .map-controls (1rem). */
-  margin: 0 calc(env(safe-area-inset-right, 0px) + 1rem) calc(env(safe-area-inset-bottom, 0px) + 10.5rem) 0;
+  /* Clears the tallest possible bottom panel - the 37.5vh search modal. Right
+     margin is offset by 7.5px so this 29px-wide control shares the same
+     horizontal center as the 44px .map-controls buttons above it (both are
+     nominally right: 1rem, but their differing widths would otherwise put
+     the visual centers out of line). */
+  margin: 0 calc(env(safe-area-inset-right, 0px) + 1rem + 7.5px) calc(env(safe-area-inset-bottom, 0px) + 37.5vh + 2rem) 0;
+  margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 37.5dvh + 2rem);
 }
