@@ -5,3 +5,4 @@ todo:
 4. update the contact email and bug report form. (use rasbora labs email)
 5. GTM -> linkedin, reddit singapore motorcycle
 6. set up GA funnel
+7. also add in the onboarding screen that the waypoints route exported may not be accurate. need some adjustments
