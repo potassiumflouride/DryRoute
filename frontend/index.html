@@ -8,6 +8,30 @@
     />
     <meta name="theme-color" content="#0a0e14" />
     <meta name="description" content="Rain-avoiding route planner for Singapore" />
+    <script>
+      (function () {
+        var measurementId = "%VITE_GA_MEASUREMENT_ID%";
+        if (!measurementId || measurementId.indexOf("%VITE_") === 0) return;
+
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () {
+          window.dataLayer.push(arguments);
+        };
+        window.gtag("consent", "default", {
+          ad_storage: "denied",
+          ad_user_data: "denied",
+          ad_personalization: "denied",
+          analytics_storage: "granted",
+        });
+        window.gtag("js", new Date());
+        window.gtag("config", measurementId, { anonymize_ip: true });
+
+        var script = document.createElement("script");
+        script.async = true;
+        script.src = "https://www.googletagmanager.com/gtag/js?id=" + measurementId;
+        document.head.appendChild(script);
+      })();
+    </script>
     <link rel="icon" href="/favicon.png" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />

@@ -5,6 +5,15 @@
   "DefaultRootObject": "index.html",
   "PriceClass": "PriceClass_All",
   "HttpVersion": "http2and3",
+  "Aliases": {
+    "Quantity": 1,
+    "Items": ["app.dryroute.com"]
+  },
+  "ViewerCertificate": {
+    "ACMCertificateArn": "arn:aws:acm:us-east-1:102805382411:certificate/a52e0102-9bb6-4a33-93bd-6b332f24871b",
+    "SSLSupportMethod": "sni-only",
+    "MinimumProtocolVersion": "TLSv1.2_2021"
+  },
   "Origins": {
     "Quantity": 3,
     "Items": [

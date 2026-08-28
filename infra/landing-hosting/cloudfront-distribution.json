@@ -1,0 +1,39 @@
+{
+  "CallerReference": "dryroute-landing-hosting",
+  "Comment": "DryRoute landing page: S3 static origin, apex domain",
+  "Enabled": true,
+  "DefaultRootObject": "index.html",
+  "PriceClass": "PriceClass_All",
+  "HttpVersion": "http2and3",
+  "Aliases": {
+    "Quantity": 1,
+    "Items": ["dryroute.com"]
+  },
+  "ViewerCertificate": {
+    "ACMCertificateArn": "arn:aws:acm:us-east-1:102805382411:certificate/a52e0102-9bb6-4a33-93bd-6b332f24871b",
+    "SSLSupportMethod": "sni-only",
+    "MinimumProtocolVersion": "TLSv1.2_2021"
+  },
+  "Origins": {
+    "Quantity": 1,
+    "Items": [
+      {
+        "Id": "s3-landing",
+        "DomainName": "dryroute-landing.s3.ap-southeast-1.amazonaws.com",
+        "OriginAccessControlId": "E9WHR8MZQKV7I",
+        "S3OriginConfig": { "OriginAccessIdentity": "" }
+      }
+    ]
+  },
+  "DefaultCacheBehavior": {
+    "TargetOriginId": "s3-landing",
+    "ViewerProtocolPolicy": "redirect-to-https",
+    "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
+    "Compress": true,
+    "AllowedMethods": {
+      "Quantity": 2,
+      "Items": ["GET", "HEAD"],
+      "CachedMethods": { "Quantity": 2, "Items": ["GET", "HEAD"] }
+    }
+  }
+}

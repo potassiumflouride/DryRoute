@@ -238,3 +238,6 @@ valhalla/data/
 
 # AWS SAM local build output
 .aws-sam/
+
+# macOS
+.DS_Store

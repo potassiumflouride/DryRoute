@@ -116,7 +116,17 @@ Reads `CLOUDFRONT_DISTRIBUTION_ID` (and optionally `FRONTEND_BUCKET`/`AWS_REGION
 
 ## Custom domain
 
-Not set up here - the CloudFront default `*.cloudfront.net` domain is HTTPS out of the box and enough to launch on. Adding a custom domain later needs an ACM certificate issued in `us-east-1` (regardless of the distribution's region) plus a `ViewerCertificate` and `Aliases` update to `cloudfront-distribution.json`.
+Served at `app.dryroute.com`. `cloudfront-distribution.json`'s `Aliases` and `ViewerCertificate` are already filled in for this - see `infra/environments/production/README.md` for the Route 53 hosted zone and ACM certificate (issued in `us-east-1`, regardless of this distribution's region) that `CERTIFICATE_ARN` there needs to be replaced with, and for the DNS record pointing `app.dryroute.com` at this distribution.
+
+If you're applying the alias/cert change to an already-created distribution rather than creating it fresh, that's an update, not a create:
+
+```bash
+aws cloudfront get-distribution-config --id <DISTRIBUTION_ID>
+# take the returned ETag, then:
+aws cloudfront update-distribution --id <DISTRIBUTION_ID> \
+  --distribution-config file://cloudfront-distribution.json \
+  --if-match <ETag>
+```
 
 ## Verifying a deployment
 

@@ -11,10 +11,8 @@ import { initSettingsTray } from "./settingsTray";
 import { initOnboarding } from "./onboarding";
 import { applyTheme, getInitialTheme, type Theme } from "./theme";
 import { getCurrentLocation } from "./geolocation";
-import { initAnalytics, trackEvent } from "./analytics";
+import { trackEvent } from "./analytics";
 import "./style.css";
-
-initAnalytics();
 
 const TILES_SOURCE = "protomaps";
 const TILES_URL = "/tiles/dryroute/{z}/{x}/{y}.mvt";
