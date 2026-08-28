@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DryRoute — Onboarding mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #0a0e14;
+    --slate: #131a24;
+    --slate-2: #1b2431;
+    --mist: #c9d3db;
+    --mist-dim: #8b97a3;
+    --rain: #4c6efd;
+    --dry: #6ee7b7;
+    --danger: #f87171;
+    --border: rgba(201, 211, 219, 0.15);
+    --shadow: rgba(0, 0, 0, 0.45);
+    --hover: rgba(110, 231, 183, 0.1);
+    --surface-glass: rgba(19, 26, 36, 0.72);
+
+    --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+    --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+
+  :root[data-theme="light"] {
+    --ink: #f4f6f5;
+    --slate: #ffffff;
+    --slate-2: #eef1f0;
+    --mist: #1b2430;
+    --mist-dim: #5b6672;
+    --rain: #3a56d4;
+    --dry: #0a7a54;
+    --danger: #dc2626;
+    --border: rgba(27, 36, 48, 0.12);
+    --shadow: rgba(20, 30, 40, 0.18);
+    --hover: rgba(10, 122, 84, 0.08);
+    --surface-glass: rgba(255, 255, 255, 0.82);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    background: var(--ink);
+    color: var(--mist);
+    font-family: var(--font-body);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2.5rem 1.25rem;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  .stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .stage-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--mist-dim);
+    letter-spacing: 0.02em;
+  }
+
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--slate);
+    color: var(--mist);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    cursor: pointer;
+  }
+  .theme-toggle:hover { background: var(--hover); }
+
+  /* ---- phone frame ---- */
+  .phone {
+    position: relative;
+    width: 390px;
+    height: 844px;
+    max-width: 92vw;
+    max-height: 86vh;
+    aspect-ratio: 390 / 844;
+    border-radius: 54px;
+    padding: 14px;
+    background: linear-gradient(160deg, #05070b, #0e131b);
+    box-shadow:
+      0 30px 60px -20px var(--shadow),
+      0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  }
+
+  .screen {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 40px;
+    overflow: hidden;
+    background: var(--ink);
+    isolation: isolate;
+  }
+
+  .notch {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 108px;
+    height: 26px;
+    border-radius: 999px;
+    background: #05070b;
+    z-index: 30;
+  }
+
+  /* ---- track / slides ---- */
+  .track {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    width: 400%;
+    height: 100%;
+    transition: transform 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+    touch-action: pan-y;
+  }
+
+  .slide {
+    position: relative;
+    width: 25%;
+    height: 100%;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    padding: calc(52px + env(safe-area-inset-top, 0px)) 1.75rem calc(120px + env(safe-area-inset-bottom, 0px));
+    overflow: hidden;
+  }
+
+  .skip-btn {
+    position: absolute;
+    top: calc(20px + env(safe-area-inset-top, 0px));
+    right: 1.5rem;
+    z-index: 20;
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--mist-dim);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.4rem 0.6rem;
+  }
+  .skip-btn:hover { color: var(--mist); }
+
+  .visual {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin-bottom: 1.25rem;
+  }
+
+  .copy { text-align: left; }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dry);
+    margin: 0 0 0.6rem;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.7rem;
+    line-height: 1.18;
+    margin: 0 0 0.6rem;
+    color: var(--mist);
+    letter-spacing: -0.01em;
+  }
+
+  h1 .accent { color: var(--dry); }
+  h1 .accent-rain { color: var(--rain); }
+
+  p.desc {
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: var(--mist-dim);
+    margin: 0;
+    max-width: 30ch;
+  }
+
+  /* ---- bottom nav ---- */
+  .bottom-nav {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 0 1.5rem calc(1.75rem + env(safe-area-inset-bottom, 0px));
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 0.75rem;
+    background: linear-gradient(to top, var(--ink) 55%, transparent);
+    z-index: 25;
+  }
+
+  .back-btn {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--slate);
+    color: var(--mist);
+    cursor: pointer;
+    transition: opacity 0.2s ease, background 0.15s ease, visibility 0.2s ease;
+  }
+  .back-btn:hover { background: var(--hover); }
+  .back-btn svg { width: 18px; height: 18px; }
+  .back-btn.is-hidden { visibility: hidden; pointer-events: none; }
+
+  .dots {
+    grid-column: 2;
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--border);
+    transition: all 0.35s cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  .dot.active {
+    width: 20px;
+    background: var(--dry);
+  }
+
+  .next-btn {
+    justify-self: end;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    height: 48px;
+    padding: 0 1.3rem;
+    border-radius: 999px;
+    border: none;
+    background: var(--dry);
+    color: #06251b;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    box-shadow: 0 8px 20px -6px rgba(110, 231, 183, 0.45);
+    transition: transform 0.15s ease, filter 0.15s ease;
+    white-space: nowrap;
+  }
+  .next-btn:hover { filter: brightness(1.05); }
+  .next-btn:active { transform: scale(0.97); }
+  .next-btn svg { width: 16px; height: 16px; }
+
+  /* ================= SCREEN 1: WELCOME ================= */
+  .slide-1 { justify-content: center; }
+  .welcome-mark {
+    width: 96px;
+    height: 96px;
+    margin: 0 auto 1.75rem;
+    display: block;
+  }
+  .wordmark {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 2rem;
+    text-align: center;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.75rem;
+  }
+  .wordmark .dry-part { color: var(--mist); font-weight: 500; }
+  .wordmark .route-part { color: var(--dry); }
+  .welcome-tagline {
+    text-align: center;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.35rem;
+    color: var(--mist);
+    margin: 0 0 0.6rem;
+  }
+  .welcome-tagline .accent { color: var(--rain); }
+  .welcome-sub {
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--mist-dim);
+    margin: 0 auto;
+    max-width: 26ch;
+  }
+  .welcome-copy { display: flex; flex-direction: column; align-items: center; }
+
+  /* ================= SCREEN 2: RADAR ================= */
+  .radar-visual {
+    width: 240px;
+    height: 240px;
+    position: relative;
+    border-radius: 28px;
+    background: var(--slate);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    box-shadow: 0 20px 40px -20px var(--shadow);
+  }
+  .radar-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 24px 24px;
+    opacity: 0.6;
+  }
+  .rain-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(16px);
+    background: radial-gradient(circle, rgba(76, 110, 253, 0.85), rgba(76, 110, 253, 0));
+    animation: drift 6s ease-in-out infinite alternate;
+  }
+  .rain-blob.b1 { width: 130px; height: 130px; top: -20px; left: -10px; animation-delay: 0s; }
+  .rain-blob.b2 { width: 90px; height: 90px; bottom: 10px; right: -10px; animation-delay: -2s; }
+  .rain-blob.b3 { width: 70px; height: 70px; bottom: 40px; left: 30px; opacity: 0.7; animation-delay: -4s; }
+  @keyframes drift {
+    from { transform: translate(0, 0) scale(1); }
+    to { transform: translate(8px, -6px) scale(1.08); }
+  }
+  .radar-route {
+    position: absolute;
+    inset: 0;
+  }
+  .radar-pulse {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--mist);
+    background: var(--surface-glass);
+    backdrop-filter: blur(10px);
+    padding: 0.3rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    z-index: 5;
+  }
+  .radar-pulse .live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--danger);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* ================= SCREEN 3: DRAG ROUTE ================= */
+  .drag-visual {
+    width: 260px;
+    height: 220px;
+    position: relative;
+  }
+  .drag-blob {
+    position: absolute;
+    top: 20px;
+    left: 60px;
+    width: 130px;
+    height: 110px;
+    border-radius: 50%;
+    filter: blur(18px);
+    background: radial-gradient(circle, rgba(76, 110, 253, 0.65), rgba(76, 110, 253, 0));
+  }
+  .hint-bubble {
+    position: absolute;
+    top: -6px;
+    left: 8px;
+    font-family: var(--font-body);
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: var(--mist);
+    background: var(--surface-glass);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    padding: 0.35rem 0.6rem;
+    border-radius: 999px;
+    white-space: nowrap;
+    box-shadow: 0 6px 16px -8px var(--shadow);
+    z-index: 5;
+  }
+  .waypoint {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--dry);
+    border: 3px solid var(--ink);
+    box-shadow: 0 0 0 1px var(--dry);
+    z-index: 6;
+    animation: waypoint-move 3.6s ease-in-out infinite;
+  }
+  @keyframes waypoint-move {
+    0%, 12% { offset-distance: 50%; }
+    45%, 65% { offset-distance: 18%; }
+    88%, 100% { offset-distance: 50%; }
+  }
+
+  /* ================= SCREEN 4: EXPORT ================= */
+  .export-visual {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.6rem;
+  }
+  .export-card {
+    width: 220px;
+    padding: 1rem 1.1rem;
+    border-radius: 20px;
+    background: var(--slate);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    box-shadow: 0 16px 32px -20px var(--shadow);
+  }
+  .export-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .export-icon.g { background: linear-gradient(135deg, #34a853, #4285f4); }
+  .export-icon.a { background: linear-gradient(135deg, #2b2f36, #4a4f58); }
+  .export-icon svg { width: 22px; height: 22px; }
+  .export-text { text-align: left; }
+  .export-title { font-size: 0.85rem; font-weight: 600; color: var(--mist); margin: 0 0 0.15rem; }
+  .export-sub { font-size: 0.72rem; color: var(--mist-dim); margin: 0; }
+  .export-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dry);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rain-blob, .waypoint, .radar-pulse .live-dot { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="stage-toolbar">
+    <span>DRYROUTE · ONBOARDING MOCKUP</span>
+    <button class="theme-toggle" id="themeToggle" type="button">☀ light</button>
+  </div>
+
+  <div class="phone">
+    <div class="screen">
+      <div class="notch"></div>
+
+      <button class="skip-btn" id="skipBtn" type="button">Skip</button>
+
+      <div class="track" id="track">
+
+        <!-- SLIDE 1: WELCOME -->
+        <div class="slide slide-1">
+          <div class="welcome-copy" style="margin: auto 0;">
+            <svg class="welcome-mark" viewBox="0 0 512 512" fill="none">
+              <rect width="512" height="512" rx="96" fill="#0A0E14"/>
+              <path d="M256 92c66 84 118 152 118 214a118 118 0 1 1-236 0c0-62 52-130 118-214z"
+                    fill="none" stroke="#4C6EF5" stroke-width="18" stroke-linejoin="round" opacity="0.55"/>
+              <path d="M124 336 C 200 300, 220 220, 296 176 S 400 132, 400 132"
+                    fill="none" stroke="#6EE7B7" stroke-width="22" stroke-linecap="round"/>
+            </svg>
+            <p class="wordmark"><span class="dry-part">Dry</span><span class="route-part">Route</span></p>
+            <p class="welcome-tagline">Ride around the <span class="accent">rain.</span></p>
+            <p class="welcome-sub">Live rain radar for riders in Singapore, right on your route.</p>
+          </div>
+        </div>
+
+        <!-- SLIDE 2: SEE THE RAIN -->
+        <div class="slide slide-2">
+          <div class="visual">
+            <div class="radar-visual">
+              <div class="radar-grid"></div>
+              <div class="rain-blob b1"></div>
+              <div class="rain-blob b2"></div>
+              <div class="rain-blob b3"></div>
+              <div class="radar-pulse"><span class="live-dot"></span> LIVE · NEA RADAR</div>
+              <svg class="radar-route" viewBox="0 0 240 240" fill="none">
+                <path d="M30 210 C 80 190, 100 150, 130 120 S 190 60, 210 30"
+                      stroke="#6EE7B7" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+              </svg>
+            </div>
+          </div>
+          <div class="copy">
+            <p class="eyebrow">Step 1</p>
+            <h1>See the rain before you ride into it</h1>
+            <p class="desc">Live radar from NEA sits right on your map, refreshed every few minutes, so you know what's ahead.</p>
+          </div>
+        </div>
+
+        <!-- SLIDE 3: DRAG AROUND IT -->
+        <div class="slide slide-3">
+          <div class="visual">
+            <div class="drag-visual">
+              <div class="drag-blob"></div>
+              <div class="hint-bubble">Drag to route around it</div>
+              <svg viewBox="0 0 260 220" fill="none" style="position:absolute; inset:0;">
+                <path d="M10 190 Q 70 60, 130 100 T 250 40" stroke="var(--rain)" stroke-width="3"
+                      stroke-linecap="round" stroke-dasharray="1 9" opacity="0.5"/>
+                <path id="curvedRoute" d="M10 190 Q 70 190, 130 140 T 250 40" stroke="#6EE7B7"
+                      stroke-width="4" stroke-linecap="round"/>
+              </svg>
+              <div class="waypoint" style="offset-path: path('M10 190 Q 70 190, 130 140 T 250 40'); offset-rotate: 0deg;"></div>
+            </div>
+          </div>
+          <div class="copy">
+            <p class="eyebrow">Step 2</p>
+            <h1>Drag your route <span class="accent">around</span> the rain</h1>
+            <p class="desc">Pull your path away from the wet patches. DryRoute keeps the rest of the route riding-friendly.</p>
+          </div>
+        </div>
+
+        <!-- SLIDE 4: EXPORT -->
+        <div class="slide slide-4">
+          <div class="visual">
+            <div class="export-visual">
+              <div class="export-card">
+                <div class="export-icon g">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C7.6 2 4 5.6 4 10c0 5.2 6.5 11 7.3 11.7.4.3 1 .3 1.4 0C13.5 21 20 15.2 20 10c0-4.4-3.6-8-8-8z" fill="white" opacity="0.95"/><circle cx="12" cy="10" r="3" fill="#4285f4"/></svg>
+                </div>
+                <div class="export-text">
+                  <p class="export-title">Google Maps</p>
+                  <p class="export-sub">Turn-by-turn on your dry route</p>
+                </div>
+              </div>
+              <div class="export-arrow">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2v9M8 11l4-4M8 11L4 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <div class="export-card">
+                <div class="export-icon a">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M16.5 2.5c.1 1-.3 2-1 2.8-.7.8-1.8 1.4-2.9 1.3-.1-1 .4-2 1-2.8.7-.8 1.9-1.4 2.9-1.3zM19.7 17.4c-.5 1.2-.8 1.7-1.5 2.7-1 1.4-2.3 3.2-4 3.2-1.5 0-1.9-1-3.9-1s-2.5 1-3.9 1c-1.7 0-3-1.6-4-3-2.4-3.4-2.7-7.5-1.2-9.6.8-1.2 2.2-2 3.6-2 1.5 0 2.4 1 3.7 1s2-.9 3.9-.9c1.4 0 2.9.7 3.9 1.9-3.4 1.9-2.9 6.7.4 7.7z" fill="white"/></svg>
+                </div>
+                <div class="export-text">
+                  <p class="export-title">Apple Maps</p>
+                  <p class="export-sub">Turn-by-turn on your dry route</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="copy">
+            <p class="eyebrow">Step 3</p>
+            <h1>Take it to <span class="accent-rain">your</span> maps app</h1>
+            <p class="desc">When your route looks good, send it straight to Google Maps or Apple Maps for turn-by-turn.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="bottom-nav">
+        <button class="back-btn is-hidden" id="backBtn" type="button" aria-label="Back">
+          <svg viewBox="0 0 16 16" fill="none"><path d="M13 8H3M7 4L3 8l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="dots" id="dots">
+          <span class="dot active"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </div>
+        <button class="next-btn" id="nextBtn" type="button">
+          <span id="nextLabel">Next</span>
+          <svg viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var track = document.getElementById('track');
+    var dots = Array.prototype.slice.call(document.getElementById('dots').children);
+    var backBtn = document.getElementById('backBtn');
+    var nextBtn = document.getElementById('nextBtn');
+    var nextLabel = document.getElementById('nextLabel');
+    var skipBtn = document.getElementById('skipBtn');
+    var themeToggle = document.getElementById('themeToggle');
+    var total = dots.length;
+    var index = 0;
+
+    function render() {
+      track.style.transform = 'translateX(-' + (index * 100 / total) + '%)';
+      dots.forEach(function (d, i) {
+        d.classList.toggle('active', i === index);
+      });
+      var last = index === total - 1;
+      var first = index === 0;
+      nextLabel.textContent = last ? 'Get started' : 'Next';
+      skipBtn.style.visibility = last ? 'hidden' : 'visible';
+      backBtn.classList.toggle('is-hidden', first);
+    }
+
+    function goTo(i) {
+      index = Math.max(0, Math.min(total - 1, i));
+      render();
+    }
+
+    nextBtn.addEventListener('click', function () {
+      if (index === total - 1) {
+        index = 0;
+        render();
+        return;
+      }
+      goTo(index + 1);
+    });
+
+    skipBtn.addEventListener('click', function () {
+      goTo(total - 1);
+    });
+
+    backBtn.addEventListener('click', function () {
+      goTo(index - 1);
+    });
+
+    dots.forEach(function (d, i) {
+      d.style.cursor = 'pointer';
+      d.addEventListener('click', function () { goTo(i); });
+    });
+
+    // swipe support
+    var startX = null;
+    var screenEl = document.querySelector('.screen');
+    screenEl.addEventListener('pointerdown', function (e) {
+      startX = e.clientX;
+    });
+    screenEl.addEventListener('pointerup', function (e) {
+      if (startX === null) return;
+      var dx = e.clientX - startX;
+      if (Math.abs(dx) > 40) {
+        if (dx < 0) goTo(index + 1);
+        else goTo(index - 1);
+      }
+      startX = null;
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight') goTo(index + 1);
+      if (e.key === 'ArrowLeft') goTo(index - 1);
+    });
+
+    themeToggle.addEventListener('click', function () {
+      var root = document.documentElement;
+      var isLight = root.getAttribute('data-theme') === 'light';
+      root.setAttribute('data-theme', isLight ? 'dark' : 'light');
+      themeToggle.textContent = isLight ? '☾ dark' : '☀ light';
+    });
+
+    render();
+  })();
+</script>
+
+</body>
+</html>

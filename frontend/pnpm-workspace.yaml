@@ -1,0 +1,3 @@
+# pnpm project settings for this standalone frontend package.
+allowBuilds:
+  esbuild: true

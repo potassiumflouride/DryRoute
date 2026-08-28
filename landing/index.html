@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DryRoute — Ride around the rain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #f4f6f5;
+    --surface: #ffffff;
+    --ink: #1b2430;
+    --ink-dim: #5b6672;
+    --ink-faint: #8a94a0;
+    --rain: #3a56d4;
+    --rain-soft: rgba(58,86,212,0.1);
+    --dry: #0a7a54;
+    --dry-soft: rgba(10,122,84,0.1);
+    --border: rgba(27,36,48,0.12);
+    --shadow: rgba(27,36,48,0.12);
+    --hover: rgba(10,122,84,0.1);
+    --font-display: "Space Grotesk", system-ui, sans-serif;
+    --font-body: "Inter", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+  a { color: inherit; }
+
+  .page {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header.nav {
+    padding: 1.6rem 2.5rem 0;
+  }
+  .wordmark {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.1rem;
+    letter-spacing: 0.01em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    text-decoration: none;
+    color: var(--ink);
+  }
+  .wordmark strong { color: var(--dry); font-weight: 700; }
+  .wordmark .mark { width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0; }
+
+  main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+  }
+
+  .split {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 2.5rem 2.5rem;
+    display: grid;
+    grid-template-columns: 1fr 0.86fr;
+    gap: 4rem;
+    align-items: center;
+  }
+  @media (max-width: 900px) {
+    .split { grid-template-columns: 1fr; gap: 2.5rem; padding: 1rem 1.5rem 3rem; }
+  }
+
+  /* ---------- Left: prose ---------- */
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dry);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.3rem;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 50%;
+    background: var(--dry);
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(2.4rem, 4.6vw, 3.4rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 0 0 1.3rem;
+    color: var(--ink);
+  }
+  h1 .accent { color: var(--dry); }
+
+  .hero-description {
+    font-size: 1.08rem;
+    color: var(--ink-dim);
+    max-width: 28rem;
+    margin: 0 0 1.6rem;
+  }
+  .hero-description strong { color: var(--ink); font-weight: 600; }
+
+  .hero-points {
+    list-style: none;
+    margin: 0 0 2.2rem;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+  .hero-points li {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--ink);
+  }
+  .hero-points__icon {
+    flex: none;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    background: var(--dry-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .hero-points__icon svg { width: 1rem; height: 1rem; color: var(--dry); }
+
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.3rem;
+    flex-wrap: wrap;
+  }
+
+  .primary-button {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #fff;
+    background: var(--ink);
+    padding: 0.85rem 1.6rem;
+    border-radius: 999px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 6px 20px rgba(27,36,48,0.22);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  }
+  .primary-button:hover { transform: translateY(-2px); background: #000; box-shadow: 0 10px 26px rgba(27,36,48,0.3); }
+  .primary-button:focus-visible { outline: 2px solid var(--dry); outline-offset: 3px; }
+
+  .secondary-button {
+    font-size: 0.9rem;
+    color: var(--ink-dim);
+    text-decoration: none;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 2px;
+  }
+  .secondary-button:hover { color: var(--ink); border-color: var(--ink-faint); }
+  .secondary-button:focus-visible { outline: 2px solid var(--dry); outline-offset: 3px; }
+
+  /* ---------- Install view ---------- */
+  .view { animation: viewIn 0.25s ease; }
+  @keyframes viewIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .install-heading { font-size: clamp(2rem, 3.8vw, 2.7rem); }
+
+  .device-toggle {
+    display: inline-flex;
+    padding: 0.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    gap: 0.25rem;
+    margin-bottom: 1.8rem;
+  }
+  .device-tab {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--ink-dim);
+    background: transparent;
+    border: none;
+    padding: 0.5rem 1.2rem;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .device-tab.is-active { background: var(--ink); color: #fff; }
+  .device-tab:not(.is-active):hover { color: var(--ink); }
+  .device-tab:focus-visible { outline: 2px solid var(--dry); outline-offset: 2px; }
+
+  .install-subhead {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: var(--ink);
+    margin: 0 0 1rem;
+  }
+
+  .install-steps {
+    list-style: none;
+    counter-reset: install-step;
+    margin: 0 0 1.1rem;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    max-width: 26rem;
+  }
+  .install-steps li {
+    counter-increment: install-step;
+    display: flex;
+    align-items: baseline;
+    gap: 0.8rem;
+    font-size: 0.95rem;
+    color: var(--ink-dim);
+  }
+  .install-steps li::before {
+    content: counter(install-step);
+    flex: none;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 50%;
+    background: var(--dry-soft);
+    color: var(--dry);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: translateY(2px);
+  }
+  .install-steps strong { color: var(--ink); font-weight: 600; }
+
+  .install-footnote { font-size: 0.9rem; color: var(--ink-faint); margin: 0 0 1.8rem; max-width: 26rem; }
+
+  /* ---------- Right: iPhone with demo ---------- */
+  .phone-stage {
+    display: flex;
+    justify-content: center;
+  }
+  .phone-frame {
+    position: relative;
+    width: min(300px, 78vw);
+    aspect-ratio: 9 / 19.3;
+    background: linear-gradient(160deg, #2b2d33, #17181c);
+    border-radius: 2.7rem;
+    padding: 0.6rem;
+    box-shadow:
+      0 30px 60px -20px rgba(27,36,48,0.35),
+      0 0 0 1px rgba(255,255,255,0.04) inset;
+  }
+  .phone-screen {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: var(--surface);
+    border-radius: 2.2rem;
+    overflow: hidden;
+  }
+  .dynamic-island {
+    position: absolute;
+    top: 0.55rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 5.4rem;
+    height: 1.5rem;
+    background: #111;
+    border-radius: 999px;
+    z-index: 5;
+  }
+
+  .app-statusbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2.7rem;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 0 1.1rem 0.4rem;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.68rem;
+    color: var(--ink);
+    z-index: 4;
+  }
+
+  .app-map {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(150deg, #eef1f5 0%, #e6eaee 100%);
+  }
+  .app-map-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(27,36,48,0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(27,36,48,0.045) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  .app-rain {
+    position: absolute;
+    top: 14%;
+    right: -6%;
+    width: 68%;
+    height: 34%;
+    border-radius: 50% 45% 55% 50% / 55% 50% 55% 45%;
+    background: radial-gradient(circle at 45% 40%, rgba(58,86,212,0.34), rgba(58,86,212,0.12) 65%, transparent 80%);
+    animation: drift 7s ease-in-out infinite;
+  }
+  @keyframes drift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-4%, 3%) scale(1.04); }
+  }
+
+  .app-rain-tag {
+    position: absolute;
+    top: 17%;
+    right: 8%;
+    font-family: var(--font-mono);
+    font-size: 0.55rem;
+    color: var(--rain);
+    background: rgba(255,255,255,0.9);
+    padding: 0.2rem 0.45rem;
+    border-radius: 0.35rem;
+    border: 1px solid rgba(58,86,212,0.25);
+    z-index: 3;
+  }
+
+  .app-route-svg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; }
+  .route-wet {
+    fill: none;
+    stroke: var(--ink-faint);
+    stroke-width: 2.2;
+    stroke-dasharray: 3 6;
+    stroke-linecap: round;
+    opacity: 0;
+    animation: showWet 8s ease-in-out infinite;
+  }
+  .route-dry {
+    fill: none;
+    stroke: var(--dry);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-dasharray: 440;
+    stroke-dashoffset: 440;
+    animation: drawDry 8s ease-in-out infinite;
+  }
+  @keyframes showWet {
+    0%, 8% { opacity: 0.9; }
+    30%, 100% { opacity: 0; }
+  }
+  @keyframes drawDry {
+    0%, 22% { stroke-dashoffset: 440; opacity: 0; }
+    23% { opacity: 1; }
+    50%, 88% { stroke-dashoffset: 0; opacity: 1; }
+    97%, 100% { stroke-dashoffset: 0; opacity: 0; }
+  }
+
+  .app-pin {
+    position: absolute;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 6px var(--shadow);
+    z-index: 3;
+  }
+  .app-pin.start { left: 12%; top: 74%; background: var(--ink); }
+  .app-pin.end { left: 78%; top: 24%; background: var(--dry); }
+
+  .app-drag-handle {
+    position: absolute;
+    left: 40%;
+    top: 55%;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin: -0.75rem;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid var(--dry);
+    box-shadow: 0 3px 10px var(--shadow);
+    z-index: 4;
+    opacity: 0;
+    animation: dragIn 8s ease-in-out infinite;
+  }
+  @keyframes dragIn {
+    0%, 22% { opacity: 0; transform: translate(20px, -14px); }
+    28% { opacity: 1; transform: translate(20px, -14px); }
+    45%, 88% { opacity: 1; transform: translate(0, 0); }
+    97%, 100% { opacity: 0; transform: translate(0, 0); }
+  }
+
+  .app-sheet {
+    position: absolute;
+    left: 0.6rem;
+    right: 0.6rem;
+    bottom: 0.6rem;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 0.7rem 0.85rem;
+    z-index: 3;
+    box-shadow: 0 8px 24px var(--shadow);
+  }
+  .app-sheet .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--ink-dim);
+  }
+  .app-sheet .row .v { color: var(--ink); }
+  .app-sheet .row .v.dry { color: var(--dry); }
+  .app-sheet .handle {
+    width: 2rem;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--border);
+    margin: 0 auto 0.5rem;
+  }
+
+  .gif-note {
+    text-align: center;
+    margin-top: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--ink-faint);
+  }
+
+  footer {
+    padding: 1.4rem 2.5rem 1.8rem;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--ink-faint);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .app-rain, .route-wet, .route-dry, .app-drag-handle { animation: none; opacity: 1; }
+    .route-wet { display: none; }
+    .route-dry { stroke-dashoffset: 0; }
+    * { transition: none !important; }
+  }
+</style>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XPYCSS8MDR"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('consent', 'default', {
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
+    analytics_storage: 'granted',
+  });
+  gtag('js', new Date());
+  gtag('config', 'G-XPYCSS8MDR', { anonymize_ip: true });
+
+  function track(name, params) {
+    if (typeof gtag === 'function') gtag('event', name, params);
+  }
+</script>
+</head>
+<body>
+<div class="page">
+
+  <header class="nav">
+    <a class="wordmark" href="#">
+      <svg class="mark" viewBox="0 0 512 512" aria-hidden="true">
+        <rect width="512" height="512" rx="96" fill="#1b2430"/>
+        <path d="M256 92c66 84 118 152 118 214a118 118 0 1 1-236 0c0-62 52-130 118-214z" fill="none" stroke="#3a56d4" stroke-width="18" stroke-linejoin="round" opacity="0.55"/>
+        <path d="M124 336 C 200 300, 220 220, 296 176 S 400 132, 400 132" fill="none" stroke="#0a7a54" stroke-width="22" stroke-linecap="round"/>
+      </svg>
+      Dry<strong>Route</strong>
+    </a>
+  </header>
+
+  <main>
+    <div class="split">
+      <div class="hero-copy">
+        <div class="view" id="pitch-view">
+          <p class="eyebrow">Real-time rain radar for riders</p>
+
+          <h1>Ride around the <span class="accent">rain.</span></h1>
+
+          <p class="hero-description">DryRoute overlays real-time rain radar on your route, so you always know what's ahead.</p>
+
+          <ul class="hero-points">
+            <li><span class="hero-points__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg></span>See exactly where it's raining</li>
+            <li><span class="hero-points__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 9l-3 3 3 3M16 9l3 3-3 3M5 12h14"/></svg></span>Drag your route around it</li>
+            <li><span class="hero-points__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M7 7h10v10"/></svg></span>Export to Google Maps or Apple Maps</li>
+          </ul>
+
+          <div class="hero-actions">
+            <a href="https://app.dryroute.com" target="_blank" rel="noopener" class="primary-button">Plan Your Route</a>
+            <a href="#install" class="secondary-button" id="show-install">Add DryRoute to your phone</a>
+          </div>
+        </div>
+
+        <div class="view" id="install-view" hidden>
+          <p class="eyebrow">No app store needed</p>
+
+          <h1 class="install-heading" tabindex="-1">Add DryRoute to your phone</h1>
+
+          <p class="hero-description">Use DryRoute like a regular app.</p>
+
+          <div class="device-toggle" role="tablist" aria-label="Choose your device">
+            <button type="button" class="device-tab is-active" id="tab-ios" role="tab" aria-selected="true" aria-controls="panel-ios">iPhone</button>
+            <button type="button" class="device-tab" id="tab-android" role="tab" aria-selected="false" aria-controls="panel-android">Android</button>
+          </div>
+
+          <div class="device-panel" id="panel-ios" role="tabpanel" aria-labelledby="tab-ios">
+            <p class="install-subhead">Add DryRoute to your Home Screen</p>
+            <ol class="install-steps">
+              <li>Open DryRoute in <strong>Safari</strong></li>
+              <li>Tap the <strong>Share</strong> button</li>
+              <li>Scroll down and tap <strong>Add to Home Screen</strong></li>
+              <li>Tap <strong>Add</strong></li>
+            </ol>
+            <p class="install-footnote">DryRoute will now appear on your Home Screen like a normal app.</p>
+          </div>
+
+          <div class="device-panel" id="panel-android" hidden>
+            <p class="install-subhead">Install DryRoute on your phone</p>
+            <ol class="install-steps">
+              <li>Open DryRoute in <strong>Chrome</strong></li>
+              <li>Tap the browser menu</li>
+              <li>Tap <strong>Add to Home screen</strong> or <strong>Install app</strong></li>
+              <li>Confirm the installation</li>
+            </ol>
+            <p class="install-footnote">DryRoute will now appear alongside your other apps.</p>
+          </div>
+
+          <div class="hero-actions">
+            <a href="https://app.dryroute.com" target="_blank" rel="noopener" class="primary-button">Plan Your Route</a>
+            <a href="#top" class="secondary-button" id="show-pitch">&larr; Back</a>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="phone-stage">
+          <div class="phone-frame">
+            <div class="phone-screen">
+              <div class="dynamic-island"></div>
+              <div class="app-statusbar"><span>9:41</span><span>DryRoute</span></div>
+              <div class="app-map">
+                <div class="app-map-grid"></div>
+                <div class="app-rain"></div>
+                <div class="app-rain-tag">Rain ahead</div>
+                <svg class="app-route-svg" viewBox="0 0 300 400" preserveAspectRatio="none">
+                  <path class="route-wet" d="M36,296 C80,270 110,220 150,190 C190,160 230,130 258,96" />
+                  <path class="route-dry" d="M36,296 C70,250 60,190 120,190 C170,190 190,150 258,96" />
+                </svg>
+                <div class="app-drag-handle"></div>
+                <div class="app-pin start"></div>
+                <div class="app-pin end"></div>
+                <div class="app-sheet">
+                  <div class="handle"></div>
+                  <div class="row"><span>Bugis → Changi</span><span class="v dry">Dry route</span></div>
+                  <div class="row" style="margin-top:0.3rem;"><span>18.2 km</span><span class="v">26 min</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="gif-note">Looping preview — swap for a real screen-capture GIF</p>
+      </div>
+    </div>
+  </main>
+
+  <footer>Built for Singapore riders. Radar data from NEA. We use Google Analytics to understand usage.</footer>
+
+</div>
+
+<script>
+  var pitchView = document.getElementById('pitch-view');
+  var installView = document.getElementById('install-view');
+  var showInstall = document.getElementById('show-install');
+  var showPitch = document.getElementById('show-pitch');
+
+  showInstall.addEventListener('click', function (e) {
+    e.preventDefault();
+    pitchView.hidden = true;
+    installView.hidden = false;
+    installView.querySelector('h1').focus({ preventScroll: true });
+    track('install_view_shown', { source: 'pitch_link' });
+  });
+
+  showPitch.addEventListener('click', function (e) {
+    e.preventDefault();
+    installView.hidden = true;
+    pitchView.hidden = false;
+    track('install_view_dismissed');
+  });
+
+  var tabs = document.querySelectorAll('.device-tab');
+  var panels = { ios: document.getElementById('panel-ios'), android: document.getElementById('panel-android') };
+
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var device = tab.id === 'tab-ios' ? 'ios' : 'android';
+      tabs.forEach(function (t) {
+        t.classList.toggle('is-active', t === tab);
+        t.setAttribute('aria-selected', t === tab ? 'true' : 'false');
+      });
+      panels.ios.hidden = device !== 'ios';
+      panels.android.hidden = device !== 'android';
+      track('install_tab_select', { platform: device });
+    });
+  });
+
+  document.querySelectorAll('.primary-button').forEach(function (button) {
+    button.addEventListener('click', function () {
+      track('cta_click', { cta_location: button.closest('#install-view') ? 'install' : 'pitch' });
+    });
+  });
+</script>
+</body>
+</html>
