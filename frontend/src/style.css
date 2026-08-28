@@ -108,7 +108,8 @@ body {
 .edit-start-btn,
 .edit-save-btn,
 .edit-discard-btn,
-.recenter-btn {
+.recenter-btn,
+.settings-tray__close-btn {
   pointer-events: auto;
   width: 44px;
   height: 44px;
@@ -125,13 +126,15 @@ body {
 .edit-start-btn svg,
 .edit-save-btn svg,
 .edit-discard-btn svg,
-.recenter-btn svg {
+.recenter-btn svg,
+.settings-tray__close-btn svg {
   width: 18px;
   height: 18px;
 }
 
 .edit-start-btn,
-.recenter-btn {
+.recenter-btn,
+.settings-tray__close-btn {
   background: var(--surface-glass);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -139,7 +142,32 @@ body {
 }
 
 .edit-start-btn:hover,
-.recenter-btn:hover {
+.recenter-btn:hover,
+.settings-tray__close-btn:hover {
+  color: var(--dry);
+}
+
+.settings-toggle-btn {
+  pointer-events: auto;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: none;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  color: var(--mist);
+}
+
+.settings-toggle-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.settings-toggle-btn:hover {
   color: var(--dry);
 }
 
@@ -636,6 +664,105 @@ body.is-route-edit-mode .maplibregl-ctrl-bottom-left {
   .edit-rain-hint__dot {
     animation: none;
   }
+
+  .settings-tray__backdrop,
+  .settings-tray__panel {
+    transition: none;
+  }
+}
+
+.settings-tray {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.settings-tray.is-open {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.settings-tray__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.settings-tray.is-open .settings-tray__backdrop {
+  opacity: 1;
+}
+
+.settings-tray__panel {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: min(320px, 85vw);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background: var(--surface-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 4px 16px var(--shadow);
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
+  padding: calc(env(safe-area-inset-top, 0px) + 1rem) 1rem
+    calc(env(safe-area-inset-bottom, 0px) + 1rem) calc(env(safe-area-inset-left, 0px) + 1rem);
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.settings-tray.is-open .settings-tray__panel {
+  transform: translateX(0);
+}
+
+.settings-tray__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.settings-tray__title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.125rem;
+  color: var(--mist);
+}
+
+.settings-tray__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.settings-tray__section-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--mist);
+  margin: 0;
+}
+
+.settings-tray__link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--rain);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.settings-tray__link:hover {
+  color: var(--dry);
+}
+
+.settings-tray__link svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 
 .location-sheet {

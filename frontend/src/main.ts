@@ -7,6 +7,7 @@ import { MapAttributionControl } from "./attribution";
 import { initSheetDrag } from "./sheetDrag";
 import { initRadar } from "./radar";
 import { initRoute } from "./route";
+import { initSettingsTray } from "./settingsTray";
 import { applyTheme, getInitialTheme, type Theme } from "./theme";
 import { getCurrentLocation } from "./geolocation";
 import "./style.css";
@@ -40,10 +41,37 @@ const app = document.querySelector<HTMLDivElement>("#app");
 if (app) {
   app.innerHTML = `
     <header class="app-header">
+      <button class="settings-toggle-btn" type="button" aria-label="Open settings" aria-expanded="false" aria-controls="settings-tray">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
       <img class="app-header__mark" src="/pwa-192x192.png" alt="" />
       <span class="app-header__wordmark">Dry<strong>Route</strong></span>
       <div class="app-header__actions"></div>
     </header>
+    <div class="settings-tray" id="settings-tray" aria-hidden="true">
+      <div class="settings-tray__backdrop"></div>
+      <div class="settings-tray__panel" role="dialog" aria-modal="true" aria-label="Settings">
+        <div class="settings-tray__header">
+          <span class="settings-tray__title">Settings</span>
+          <button class="settings-tray__close-btn" type="button" aria-label="Close settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="settings-tray__body">
+          <section class="settings-tray__section">
+            <h3 class="settings-tray__section-title">Report a bug or give feedback</h3>
+            <a class="settings-tray__link" href="mailto:feedback@example.com">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="m22 6-10 7L2 6"/></svg>
+              feedback@example.com
+            </a>
+            <a class="settings-tray__link settings-tray__feedback-link" href="#" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>
+              Report an issue
+            </a>
+          </section>
+        </div>
+      </div>
+    </div>
     <div class="route-hint-bubble" hidden>Drag the route to customise</div>
     <div class="route-toast" hidden>
       <span class="route-toast__dot"></span>
@@ -190,6 +218,7 @@ if (app) {
   map.addControl(geolocate, "top-left");
   initRadar(map);
   const route = initRoute(map);
+  initSettingsTray();
 
   let originSet = false;
   let bootstrapInFlight = false;
