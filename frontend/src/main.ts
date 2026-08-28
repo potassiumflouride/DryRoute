@@ -8,6 +8,7 @@ import { initSheetDrag } from "./sheetDrag";
 import { initRadar } from "./radar";
 import { initRoute } from "./route";
 import { initSettingsTray } from "./settingsTray";
+import { initOnboarding } from "./onboarding";
 import { applyTheme, getInitialTheme, type Theme } from "./theme";
 import { getCurrentLocation } from "./geolocation";
 import "./style.css";
@@ -69,6 +70,110 @@ if (app) {
               Report an issue
             </a>
           </section>
+          <section class="settings-tray__section">
+            <h3 class="settings-tray__section-title">About</h3>
+            <button class="settings-tray__link settings-tray__onboarding-btn" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/></svg>
+              Show onboarding
+            </button>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div class="onboarding-overlay" aria-hidden="true">
+      <div class="onboarding-overlay__backdrop"></div>
+      <div class="onboarding-overlay__panel" role="dialog" aria-modal="true" aria-label="Welcome to DryRoute">
+        <button class="onboarding-skip-btn" type="button">Skip</button>
+        <div class="onboarding-track">
+          <div class="onboarding-slide onboarding-slide--welcome">
+            <div class="onboarding-welcome">
+              <img class="onboarding-welcome__mark" src="/pwa-192x192.png" alt="" />
+              <p class="onboarding-wordmark">Dry<strong>Route</strong></p>
+              <p class="onboarding-welcome__tagline">Ride around the <span class="onboarding-accent-rain">rain.</span></p>
+              <p class="onboarding-welcome__sub">Live rain radar for riders in Singapore, right on your route.</p>
+            </div>
+          </div>
+          <div class="onboarding-slide">
+            <div class="onboarding-visual">
+              <div class="onboarding-radar-visual">
+                <div class="onboarding-radar-grid"></div>
+                <div class="onboarding-rain-blob onboarding-rain-blob--1"></div>
+                <div class="onboarding-rain-blob onboarding-rain-blob--2"></div>
+                <div class="onboarding-rain-blob onboarding-rain-blob--3"></div>
+                <div class="onboarding-radar-pulse"><span class="onboarding-radar-pulse__dot"></span> Live &middot; NEA radar</div>
+                <svg class="onboarding-radar-route" viewBox="0 0 240 240" fill="none">
+                  <path d="M30 210 C 80 190, 100 150, 130 120 S 190 60, 210 30" stroke="var(--dry)" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+                </svg>
+              </div>
+            </div>
+            <div class="onboarding-copy">
+              <p class="onboarding-eyebrow">Step 1</p>
+              <h2>See the rain before you ride into it</h2>
+              <p class="onboarding-desc">Live radar from NEA sits right on your map, refreshed every few minutes, so you know what's ahead.</p>
+            </div>
+          </div>
+          <div class="onboarding-slide">
+            <div class="onboarding-visual">
+              <div class="onboarding-drag-visual">
+                <div class="onboarding-drag-blob"></div>
+                <div class="onboarding-hint-bubble">Drag to route around it</div>
+                <svg viewBox="0 0 260 220" fill="none" class="onboarding-drag-svg">
+                  <path d="M10 190 Q 70 60, 130 100 T 250 40" stroke="var(--rain)" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 9" opacity="0.5"/>
+                  <path d="M10 190 Q 70 190, 130 140 T 250 40" stroke="var(--dry)" stroke-width="4" stroke-linecap="round"/>
+                </svg>
+                <div class="onboarding-waypoint"></div>
+              </div>
+            </div>
+            <div class="onboarding-copy">
+              <p class="onboarding-eyebrow">Step 2</p>
+              <h2>Drag your route <span class="onboarding-accent-dry">around</span> the rain</h2>
+              <p class="onboarding-desc">Pull your path away from the wet patches. DryRoute keeps the rest of the route riding-friendly.</p>
+            </div>
+          </div>
+          <div class="onboarding-slide">
+            <div class="onboarding-visual">
+              <div class="onboarding-export-visual">
+                <div class="onboarding-export-card">
+                  <div class="onboarding-export-icon onboarding-export-icon--google">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C7.6 2 4 5.6 4 10c0 5.2 6.5 11 7.3 11.7.4.3 1 .3 1.4 0C13.5 21 20 15.2 20 10c0-4.4-3.6-8-8-8z" fill="white" opacity="0.95"/><circle cx="12" cy="10" r="3" fill="#4285f4"/></svg>
+                  </div>
+                  <div class="onboarding-export-text">
+                    <p class="onboarding-export-title">Google Maps</p>
+                    <p class="onboarding-export-sub">Turn-by-turn on your dry route</p>
+                  </div>
+                </div>
+                <div class="onboarding-export-card">
+                  <div class="onboarding-export-icon onboarding-export-icon--apple">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M16.5 2.5c.1 1-.3 2-1 2.8-.7.8-1.8 1.4-2.9 1.3-.1-1 .4-2 1-2.8.7-.8 1.9-1.4 2.9-1.3zM19.7 17.4c-.5 1.2-.8 1.7-1.5 2.7-1 1.4-2.3 3.2-4 3.2-1.5 0-1.9-1-3.9-1s-2.5 1-3.9 1c-1.7 0-3-1.6-4-3-2.4-3.4-2.7-7.5-1.2-9.6.8-1.2 2.2-2 3.6-2 1.5 0 2.4 1 3.7 1s2-.9 3.9-.9c1.4 0 2.9.7 3.9 1.9-3.4 1.9-2.9 6.7.4 7.7z" fill="white"/></svg>
+                  </div>
+                  <div class="onboarding-export-text">
+                    <p class="onboarding-export-title">Apple Maps</p>
+                    <p class="onboarding-export-sub">Turn-by-turn on your dry route</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="onboarding-copy">
+              <p class="onboarding-eyebrow">Step 3</p>
+              <h2>Take it to <span class="onboarding-accent-rain">your</span> maps app</h2>
+              <p class="onboarding-desc">When your route looks good, send it straight to Google Maps or Apple Maps for turn-by-turn.</p>
+            </div>
+          </div>
+        </div>
+        <div class="onboarding-bottom-nav">
+          <button class="onboarding-back-btn is-hidden" type="button" aria-label="Back">
+            <svg viewBox="0 0 16 16" fill="none"><path d="M13 8H3M7 4L3 8l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="onboarding-dots">
+            <button class="onboarding-dot is-active" type="button" aria-label="Screen 1" aria-current="true"></button>
+            <button class="onboarding-dot" type="button" aria-label="Screen 2" aria-current="false"></button>
+            <button class="onboarding-dot" type="button" aria-label="Screen 3" aria-current="false"></button>
+            <button class="onboarding-dot" type="button" aria-label="Screen 4" aria-current="false"></button>
+          </div>
+          <button class="onboarding-next-btn" type="button">
+            <span class="onboarding-next-btn__label">Next</span>
+            <svg viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
         </div>
       </div>
     </div>
@@ -219,6 +324,11 @@ if (app) {
   initRadar(map);
   const route = initRoute(map);
   initSettingsTray();
+  const onboarding = initOnboarding();
+  document.querySelector<HTMLButtonElement>(".settings-tray__onboarding-btn")?.addEventListener("click", () => {
+    document.querySelector<HTMLButtonElement>(".settings-tray__close-btn")?.click();
+    onboarding.open();
+  });
 
   let originSet = false;
   let bootstrapInFlight = false;
