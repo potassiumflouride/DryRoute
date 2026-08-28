@@ -11,7 +11,10 @@ import { initSettingsTray } from "./settingsTray";
 import { initOnboarding } from "./onboarding";
 import { applyTheme, getInitialTheme, type Theme } from "./theme";
 import { getCurrentLocation } from "./geolocation";
+import { initAnalytics, trackEvent } from "./analytics";
 import "./style.css";
+
+initAnalytics();
 
 const TILES_SOURCE = "protomaps";
 const TILES_URL = "/tiles/dryroute/{z}/{x}/{y}.mvt";
@@ -61,7 +64,7 @@ if (app) {
         <div class="settings-tray__body">
           <section class="settings-tray__section">
             <h3 class="settings-tray__section-title">Report a bug or give feedback</h3>
-            <a class="settings-tray__link" href="mailto:feedback@example.com">
+            <a class="settings-tray__link settings-tray__email-link" href="mailto:feedback@example.com">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="m22 6-10 7L2 6"/></svg>
               feedback@example.com
             </a>
@@ -327,7 +330,7 @@ if (app) {
   const onboarding = initOnboarding();
   document.querySelector<HTMLButtonElement>(".settings-tray__onboarding-btn")?.addEventListener("click", () => {
     document.querySelector<HTMLButtonElement>(".settings-tray__close-btn")?.click();
-    onboarding.open();
+    onboarding.open("replay");
   });
 
   let originSet = false;
@@ -378,10 +381,12 @@ if (app) {
     inputSelector: ".location-sheet__origin .search__input",
     listSelector: ".location-sheet__origin-results",
     markerColorVar: "--dry",
+    analyticsField: "origin",
     onSelect: (result) => {
       originSet = true;
       clearHint();
       route.setOrigin(result);
+      trackEvent("origin_selected", { origin_source: "search" });
     },
     onClear: () => {
       originSet = false;
@@ -392,9 +397,11 @@ if (app) {
     inputSelector: ".location-sheet__destination .search__input",
     listSelector: ".location-sheet__destination-results",
     markerColorVar: "--rain",
+    analyticsField: "destination",
     onSelect: (result) => {
       route.setDestination(result);
       if (navigateButton) navigateButton.hidden = false;
+      trackEvent("destination_selected");
     },
     onClear: () => {
       if (navigateButton) navigateButton.hidden = true;
@@ -425,10 +432,14 @@ if (app) {
         originSearch.setExternalSelection(result, { flyTo: false });
         route.setOrigin(result);
         clearHint();
-      } catch {
+        trackEvent("current_location_used", { success: true });
+        trackEvent("origin_selected", { origin_source: "current_location" });
+      } catch (reason) {
         clearHint();
         setHint("Couldn't get your location - search for a starting point");
         originInput?.focus();
+        trackEvent("current_location_used", { success: false });
+        trackEvent("geolocation_error", { error_code: String(reason) });
       } finally {
         bootstrapInFlight = false;
         navigateButton.disabled = false;
@@ -463,6 +474,7 @@ if (app) {
   };
 
   geolocate.on("error", (event) => {
+    trackEvent("geolocation_error", { error_code: event.code });
     showRecenterHint(
       event.code === 1 ? "Location access is off - allow it in your browser settings" : "Couldn't get your location",
     );

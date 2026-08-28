@@ -471,6 +471,17 @@
     * { transition: none !important; }
   }
 </style>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XPYCSS8MDR"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'G-XPYCSS8MDR', { anonymize_ip: true });
+
+  function track(name, params) {
+    if (typeof gtag === 'function') gtag('event', name, params);
+  }
+</script>
 </head>
 <body>
 <div class="page">
@@ -580,7 +591,7 @@
     </div>
   </main>
 
-  <footer>Built for Singapore riders. Radar data from NEA.</footer>
+  <footer>Built for Singapore riders. Radar data from NEA. We use Google Analytics to understand usage.</footer>
 
 </div>
 
@@ -595,12 +606,14 @@
     pitchView.hidden = true;
     installView.hidden = false;
     installView.querySelector('h1').focus({ preventScroll: true });
+    track('install_view_shown', { source: 'pitch_link' });
   });
 
   showPitch.addEventListener('click', function (e) {
     e.preventDefault();
     installView.hidden = true;
     pitchView.hidden = false;
+    track('install_view_dismissed');
   });
 
   var tabs = document.querySelectorAll('.device-tab');
@@ -615,6 +628,13 @@
       });
       panels.ios.hidden = device !== 'ios';
       panels.android.hidden = device !== 'android';
+      track('install_tab_select', { platform: device });
+    });
+  });
+
+  document.querySelectorAll('.primary-button').forEach(function (button) {
+    button.addEventListener('click', function () {
+      track('cta_click', { cta_location: button.closest('#install-view') ? 'install' : 'pitch' });
     });
   });
 </script>

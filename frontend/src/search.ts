@@ -1,5 +1,6 @@
 import maplibregl from "maplibre-gl";
 import type { GeocodeResult } from "./types";
+import { trackEvent } from "./analytics";
 
 const DEBOUNCE_MS = 300;
 
@@ -15,6 +16,7 @@ export function createLocationSearch(
     inputSelector: string;
     listSelector: string;
     markerColorVar: string;
+    analyticsField: "origin" | "destination";
     onSelect: (result: GeocodeResult) => void;
     onMarkerClick?: () => void;
     onClear?: () => void;
@@ -115,12 +117,16 @@ export function createLocationSearch(
       list.hidden = true;
       return;
     }
-    debounceTimer = setTimeout(() => void search(query), DEBOUNCE_MS);
+    debounceTimer = setTimeout(() => {
+      trackEvent("location_search", { field: opts.analyticsField, query_length: query.length });
+      void search(query);
+    }, DEBOUNCE_MS);
   });
 
   clearButton?.addEventListener("click", () => {
     clearInput();
     input.focus();
+    trackEvent("search_cleared", { field: opts.analyticsField });
     opts.onClear?.();
   });
 

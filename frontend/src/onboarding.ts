@@ -1,7 +1,9 @@
+import { trackEvent } from "./analytics";
+
 const STORAGE_KEY = "dryroute-onboarding-seen";
 
 export interface OnboardingController {
-  open(): void;
+  open(trigger?: "first_visit" | "replay"): void;
 }
 
 export function initOnboarding(): OnboardingController {
@@ -37,6 +39,9 @@ export function initOnboarding(): OnboardingController {
     nextLabel.textContent = isLast ? "Get started" : "Next";
     skipButton.hidden = isLast;
     backButton.classList.toggle("is-hidden", isFirst);
+    if (overlay.classList.contains("is-open")) {
+      trackEvent("onboarding_step_view", { step_index: index + 1 });
+    }
   };
 
   const goTo = (next: number) => {
@@ -48,12 +53,13 @@ export function initOnboarding(): OnboardingController {
     localStorage.setItem(STORAGE_KEY, "true");
   };
 
-  const open = () => {
+  const open = (trigger: "first_visit" | "replay" = "first_visit") => {
     index = 0;
-    render();
     lastFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     overlay.classList.add("is-open");
     overlay.setAttribute("aria-hidden", "false");
+    trackEvent("onboarding_start", { trigger });
+    render();
   };
 
   const close = () => {
@@ -65,17 +71,28 @@ export function initOnboarding(): OnboardingController {
 
   nextButton.addEventListener("click", () => {
     if (index === total - 1) {
+      trackEvent("onboarding_complete");
       close();
       return;
     }
+    trackEvent("onboarding_next", { step_index: index + 1 });
     goTo(index + 1);
   });
 
-  backButton.addEventListener("click", () => goTo(index - 1));
-  skipButton.addEventListener("click", close);
+  backButton.addEventListener("click", () => {
+    trackEvent("onboarding_back", { step_index: index + 1 });
+    goTo(index - 1);
+  });
+  skipButton.addEventListener("click", () => {
+    trackEvent("onboarding_skip", { step_index: index + 1 });
+    close();
+  });
 
   dots.forEach((dot, i) => {
-    dot.addEventListener("click", () => goTo(i));
+    dot.addEventListener("click", () => {
+      trackEvent("onboarding_dot_nav", { from_step: index + 1, to_step: i + 1 });
+      goTo(i);
+    });
   });
 
   backdrop.addEventListener("click", close);
@@ -95,6 +112,8 @@ export function initOnboarding(): OnboardingController {
     if (startX === null) return;
     const dx = event.clientX - startX;
     if (Math.abs(dx) > 40) {
+      const direction = dx < 0 ? "left" : "right";
+      trackEvent("onboarding_swipe", { direction, step_index: index + 1 });
       goTo(dx < 0 ? index + 1 : index - 1);
     }
     startX = null;

@@ -1,6 +1,7 @@
 import maplibregl from "maplibre-gl";
 import type { RadarFrame } from "./types";
 import { addToMapWhenReady } from "./mapReady";
+import { trackEvent } from "./analytics";
 
 const RADAR_BUCKET_URL = "https://dryroute-rain-radar.s3.ap-southeast-1.amazonaws.com";
 const RADAR_RANGE = "240km";
@@ -217,6 +218,7 @@ export function initRadar(map: maplibregl.Map): RadarController {
     playButton.classList.add("is-playing");
     playButton.setAttribute("aria-pressed", "true");
     if (currentIndex >= frames.length - 1) currentIndex = 0;
+    if (isLive) trackEvent("radar_mode_change", { mode: "replay" });
     isLive = false;
 
     playTimer = setInterval(() => {
@@ -224,6 +226,7 @@ export function initRadar(map: maplibregl.Map): RadarController {
       if (currentIndex >= frames.length - 1) {
         currentIndex = frames.length - 1;
         isLive = true;
+        trackEvent("radar_mode_change", { mode: "live" });
         render();
         stopPlaying();
         return;
@@ -232,13 +235,31 @@ export function initRadar(map: maplibregl.Map): RadarController {
     }, PLAY_INTERVAL_MS);
   };
 
-  playButton.addEventListener("click", () => (playing ? stopPlaying() : startPlaying()));
+  playButton.addEventListener("click", () => {
+    if (playing) {
+      stopPlaying();
+      trackEvent("radar_pause");
+    } else {
+      startPlaying();
+      trackEvent("radar_play");
+    }
+  });
 
   range.addEventListener("input", () => {
     stopPlaying();
     currentIndex = Number(range.value);
-    isLive = currentIndex === frames.length - 1;
+    const nextIsLive = currentIndex === frames.length - 1;
+    if (nextIsLive !== isLive) {
+      trackEvent("radar_mode_change", { mode: nextIsLive ? "live" : "replay" });
+    }
+    isLive = nextIsLive;
     render();
+  });
+
+  range.addEventListener("change", () => {
+    const seekPositionPct =
+      frames.length > 1 ? Math.round((currentIndex / (frames.length - 1)) * 10) * 10 : 100;
+    trackEvent("radar_scrub", { seek_position_pct: seekPositionPct });
   });
 
   void backfill();

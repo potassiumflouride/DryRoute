@@ -3,6 +3,7 @@ import * as turf from "@turf/turf";
 import type { GeocodeResult, Route } from "./types";
 import { addToMapWhenReady } from "./mapReady";
 import { buildExportPoints, buildGoogleMapsUrl } from "./mapExport";
+import { trackEvent } from "./analytics";
 
 const ROUTE_SOURCE_ID = "route";
 const ROUTE_CASING_LAYER_ID = "route-layer-casing";
@@ -385,8 +386,13 @@ export function initRoute(map: maplibregl.Map): RouteController {
 
     if (dragMode) {
       const point = { lat: event.lngLat.lat, lon: event.lngLat.lng };
-      if (dragMode.kind === "move") waypoints[dragMode.index] = point;
-      else waypoints.splice(dragMode.index, 0, point);
+      if (dragMode.kind === "move") {
+        waypoints[dragMode.index] = point;
+        trackEvent("waypoint_moved", { waypoint_index: dragMode.index });
+      } else {
+        waypoints.splice(dragMode.index, 0, point);
+        trackEvent("waypoint_added", { waypoint_count: waypoints.length });
+      }
     }
     dragMode = null;
     void navigate({ fit: false });
@@ -461,8 +467,13 @@ export function initRoute(map: maplibregl.Map): RouteController {
     isDraggingRoute = false;
 
     if (dragMode && commitPoint) {
-      if (dragMode.kind === "move") waypoints[dragMode.index] = commitPoint;
-      else waypoints.splice(dragMode.index, 0, commitPoint);
+      if (dragMode.kind === "move") {
+        waypoints[dragMode.index] = commitPoint;
+        trackEvent("waypoint_moved", { waypoint_index: dragMode.index });
+      } else {
+        waypoints.splice(dragMode.index, 0, commitPoint);
+        trackEvent("waypoint_added", { waypoint_count: waypoints.length });
+      }
       dragMode = null;
       void navigate({ fit: false });
     } else if (dragMode) {
@@ -490,7 +501,7 @@ export function initRoute(map: maplibregl.Map): RouteController {
     updateEditRainHint();
   };
 
-  const navigate = async (opts: { fit?: boolean } = {}) => {
+  const navigate = async (opts: { fit?: boolean; isInitialRequest?: boolean } = {}) => {
     if (!origin || !destination) return;
     const fit = opts.fit ?? true;
 
@@ -518,6 +529,12 @@ export function initRoute(map: maplibregl.Map): RouteController {
       lastRouteAnchors = [origin, ...waypoints, destination];
       lastRouteHasRain = rainCollection.features.length > 0;
       hasDismissedRainHint = false;
+      if (opts.isInitialRequest) {
+        trackEvent("route_requested", {
+          waypoint_count: waypoints.length,
+          has_rain_hint: lastRouteHasRain,
+        });
+      }
       if (fit) fitToRoute(feature);
       routeSheetStatus.hidden = true;
       showSummary(route);
@@ -542,6 +559,7 @@ export function initRoute(map: maplibregl.Map): RouteController {
 
   editStartBtn.addEventListener("click", () => {
     if (editStartBtn.disabled) return;
+    trackEvent("route_edit_start");
     waypointsBeforeEdit = [...waypoints];
     isEditMode = true;
     applyEditModeState();
@@ -549,12 +567,16 @@ export function initRoute(map: maplibregl.Map): RouteController {
 
   editSaveBtn.addEventListener("click", () => {
     if (!isEditMode) return;
+    trackEvent("route_edit_saved", {
+      waypoint_count_delta: waypoints.length - waypointsBeforeEdit.length,
+    });
     isEditMode = false;
     applyEditModeState();
   });
 
   editDiscardBtn.addEventListener("click", () => {
     if (!isEditMode) return;
+    trackEvent("route_edit_discarded");
     isEditMode = false;
     applyEditModeState();
     waypoints = [...waypointsBeforeEdit];
@@ -563,14 +585,22 @@ export function initRoute(map: maplibregl.Map): RouteController {
 
   exportBtn.addEventListener("click", () => {
     if (!lastRoute || !lastRouteAnchors) return;
+    trackEvent("route_exported", { waypoint_count: waypoints.length });
     const points = buildExportPoints(lastRoute, lastRouteAnchors);
     window.open(buildGoogleMapsUrl(points), "_blank", "noopener,noreferrer");
   });
 
-  toastDismiss.addEventListener("click", hideToast);
-  editRainHintDismiss.addEventListener("click", dismissEditRainHint);
+  toastDismiss.addEventListener("click", () => {
+    trackEvent("route_toast_dismissed");
+    hideToast();
+  });
+  editRainHintDismiss.addEventListener("click", () => {
+    trackEvent("rain_hint_dismissed");
+    dismissEditRainHint();
+  });
 
   routeReset.addEventListener("click", () => {
+    trackEvent("route_reset");
     waypoints = [];
     routeReset.hidden = true;
     void navigate();
@@ -609,9 +639,10 @@ export function initRoute(map: maplibregl.Map): RouteController {
     },
     navigateNow: async () => {
       waypoints = [];
-      await navigate();
+      await navigate({ isInitialRequest: true });
     },
     cancelRoute: () => {
+      trackEvent("route_cancelled", { stage: lastRoute ? "after_result" : "before_request" });
       clearRoute();
       hideToast();
     },
